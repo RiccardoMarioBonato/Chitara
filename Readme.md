@@ -12,7 +12,7 @@ Chitara is an AI-powered music generation web application. This repository conta
 
 ## Tech Stack
 
-- Python 3.10
+- Python 3.10+
 - Django 4.x
 - SQLite (default development database)
 
@@ -21,7 +21,7 @@ Chitara is an AI-powered music generation web application. This repository conta
 ## Project Structure
 
 ```
-chitara/
+Chitara/
 ├── chitara/          # Django project settings
 │   ├── settings.py
 │   ├── urls.py
@@ -31,6 +31,7 @@ chitara/
 │   ├── admin.py      # Admin CRUD interface
 │   └── migrations/   # Database migrations
 ├── manage.py
+├── requirements.txt
 └── README.md
 ```
 
@@ -41,7 +42,7 @@ chitara/
 **1. Clone the repository**
 ```bash
 git clone https://github.com/RiccardoMarioBonato/Chitara.git
-cd chitara
+cd Chitara
 ```
 
 **2. Create and activate a virtual environment**
@@ -57,7 +58,7 @@ source venv/bin/activate
 
 **3. Install dependencies**
 ```bash
-pip install django
+pip install -r requirements.txt
 ```
 
 **4. Apply migrations**
@@ -85,20 +86,21 @@ Go to `http://127.0.0.1:8000/admin` and log in with your superuser credentials.
 
 | Model | Description |
 |-------|-------------|
-| `User` | A registered user who can generate, manage, and share songs |
+| `User` | Django built-in user model used for authentication and ownership |
 | `Song` | An AI-generated music track with all generation parameters |
 | `SingerModel` | A predefined AI vocal model selected during song generation |
 | `Feedback` | User-submitted feedback collected after song generation |
+| `Genre` | Reference model for musical genres (e.g. Jazz, Pop, Rock) |
+| `Mood` | Reference model for emotional tone (e.g. Calm, Happy, Energetic) |
+| `Occasion` | Reference model for song context (e.g. Birthday, Wedding) |
+| `Theme` | Reference model for optional song tags (e.g. Christmas, Love) |
 
-### Enumerations
+### Notes on Design Decisions
 
-| Enum | Values |
-|------|--------|
-| `Genre` | JAZZ, POP, ELECTRONIC, CLASSICAL, ROCK, HIPHOP |
-| `Mood` | CALM, HAPPY, ENERGETIC, ROMANTIC, SAD |
-| `Occasion` | BIRTHDAY, WEDDING, GRADUATION, HOLIDAY, CASUAL |
-| `Theme` | CHRISTMAS, HALLOWEEN, LOVE, SUMMER, MAGICAL |
-| `GenerationStatus` | PENDING, GENERATING, COMPLETED, FAILED |
+- **Genre, Mood, Occasion, Theme** are full Django Models so new values can be added via the admin panel without redeploying the application.
+- **GenerationStatus** remains a `TextChoices` enum as it is a fixed, stable lifecycle state that will not change.
+- **User** uses Django's built-in `auth.User` model to avoid redundancy with the framework's own authentication system.
+- **Themes** use a `ManyToManyField` so a song can have zero or more themes without using a JSON field.
 
 ---
 
@@ -107,9 +109,7 @@ Go to `http://127.0.0.1:8000/admin` and log in with your superuser credentials.
 CRUD functionality is demonstrated through the Django Admin interface at `/admin`.
 
 All four operations are supported for every domain entity:
-- **Create** – Add new Users, Songs, SingerModels, and Feedback via admin forms
+- **Create** – Add new records via admin forms
 - **Read** – Browse and search all records with filters
 - **Update** – Edit any existing record
 - **Delete** – Remove records individually or in bulk
-
----
