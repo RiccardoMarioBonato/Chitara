@@ -57,7 +57,9 @@ class Song(models.Model):
         choices=GenerationStatus.choices,
         default=GenerationStatus.PENDING
     )
-    is_shared  = models.BooleanField(default=False)
+    audio_url   = models.URLField(blank=True, default='')
+    external_id = models.CharField(max_length=255, blank=True, default='')
+    is_shared   = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

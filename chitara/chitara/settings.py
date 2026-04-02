@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -81,6 +82,7 @@ DATABASES = {
 }
 
 
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -99,7 +101,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+load_dotenv()
+SUNO_API_KEY      = os.getenv('SUNO_API_KEY', '')
+SUNO_API_BASE_URL = os.getenv('SUNO_API_BASE_URL', 'https://api.sunoapi.org/api/v1')
+SUNO_API_TIMEOUT  = int(os.getenv('SUNO_API_TIMEOUT', '30'))
+# Set this to your ngrok URL once it is running, e.g.:
+#   SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/songs/api/callback/
+SUNO_CALLBACK_URL = os.getenv('SUNO_CALLBACK_URL', '')
 
+# Auth redirects
+# LoginRequiredMixin sends unauthenticated users here.
+LOGIN_URL          = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/songs/'       # after login → library
+LOGOUT_REDIRECT_URL = '/accounts/login/'
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

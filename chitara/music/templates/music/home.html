@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chitara - AI Music Generation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 2.5em; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 1.1em; }
+        h2 { color: #667eea; margin-top: 20px; margin-bottom: 20px; }
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        a:hover { background: #0056b3; transform: translateY(-2px); }
+        .secondary           { background: #6c757d; }
+        .secondary:hover     { background: #5a6268; }
+        .success             { background: #28a745; }
+        .success:hover       { background: #218838; }
+        .logout-link         { background: #dc3545; }
+        .logout-link:hover   { background: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Chitara</h1>
+        <p class="subtitle">AI-Powered Music Generation</p>
+
+        {% if user.is_authenticated %}
+            <h2>Welcome, {{ user.username }}! 👋</h2>
+            <div class="buttons">
+                <a href="/songs/generate/" class="success">➕ Generate New Song</a>
+                <a href="/songs/">🎵 My Songs Library</a>
+                <a href="/admin/">⚙️ Admin Panel</a>
+                <a href="/accounts/logout/" class="logout-link">🚪 Logout</a>
+            </div>
+        {% else %}
+            <p class="subtitle">Login to start generating music with AI</p>
+            <div class="buttons">
+                <a href="/accounts/login/" class="success">🔐 Login</a>
+                <a href="/admin/" class="secondary">📊 Admin Panel</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

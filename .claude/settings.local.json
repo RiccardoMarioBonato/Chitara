@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py makemigrations music --name add_audio_url_to_song)",
+      "Bash(python manage.py check music)",
+      "Bash(python manage.py check)",
+      "Bash(python manage.py shell -c \":*)",
+      "Bash(python -c \"from music.suno_client import SunoAPIClient, APIError; print\\(''Import OK''\\)\")",
+      "Bash(python manage.py makemigrations music --name add_external_id_to_song)",
+      "Bash(python manage.py migrate)"
+    ]
+  }
+}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Generate a Song — Chitara{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Page header -->
+      <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'music:song-library' %}" class="btn btn-outline-secondary btn-sm me-3">
+          &larr; My Library
+        </a>
+        <h1 class="h3 mb-0">Generate a New Song</h1>
+      </div>
+
+      <!-- Global error messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Generation form -->
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+          <form method="post" id="song-generation-form" novalidate>
+            {% csrf_token %}
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div class="mb-3">
+              <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">
+                Song Title <span class="text-danger">*</span>
+              </label>
+              {{ form.title }}
+              {% if form.title.errors %}
+                <div class="invalid-feedback d-block">{{ form.title.errors|join:", " }}</div>
+              {% endif %}
+              <div class="form-text">{{ form.title.help_text }}</div>
+            </div>
+
+            <!-- Voice Model -->
+            <div class="mb-3">
+              <label for="{{ form.singer_model.id_for_label }}" class="form-label fw-semibold">
+                Voice Model <span class="text-danger">*</span>
+              </label>
+              {{ form.singer_model }}
+              {% if form.singer_model.errors %}
+                <div class="invalid-feedback d-block">{{ form.singer_model.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Genre & Mood — side by side on md+ -->
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label for="{{ form.genre.id_for_label }}" class="form-label fw-semibold">
+                  Genre <span class="text-danger">*</span>
+                </label>
+                {{ form.genre }}
+                {% if form.genre.errors %}
+                  <div class="invalid-feedback d-block">{{ form.genre.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label for="{{ form.mood.id_for_label }}" class="form-label fw-semibold">
+                  Mood <span class="text-danger">*</span>
+                </label>
+                {{ form.mood }}
+                {% if form.mood.errors %}
+                  <div class="invalid-feedback d-block">{{ form.mood.errors|join:", " }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Occasion -->
+            <div class="mb-3">
+              <label for="{{ form.occasion.id_for_label }}" class="form-label fw-semibold">
+                Occasion <span class="text-danger">*</span>
+              </label>
+              {{ form.occasion }}
+              {% if form.occasion.errors %}
+                <div class="invalid-feedback d-block">{{ form.occasion.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+
+            <!-- Themes (checkboxes) -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Themes (optional)</label>
+              <div class="d-flex flex-wrap gap-3">
+                {% for choice in form.themes %}
+                  <div class="form-check">
+                    {{ choice.tag }}
+                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                      {{ choice.choice_label }}
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+              {% if form.themes.errors %}
+                <div class="invalid-feedback d-block">{{ form.themes.errors|join:", " }}</div>
+              {% endif %}
+              <div class="form-text">{{ form.themes.help_text }}</div>
+            </div>
+
+            <!-- Duration -->
+            <div class="mb-3">
+              <label for="{{ form.duration.id_for_label }}" class="form-label fw-semibold">
+                Duration (seconds) <span class="text-danger">*</span>
+              </label>
+              {{ form.duration }}
+              {% if form.duration.errors %}
+                <div class="invalid-feedback d-block">{{ form.duration.errors|join:", " }}</div>
+              {% endif %}
+              <div class="form-text">{{ form.duration.help_text }}</div>
+            </div>
+
+            <!-- Review Notes -->
+            <div class="mb-4">
+              <label for="{{ form.review_notes.id_for_label }}" class="form-label fw-semibold">
+                Creative Notes (optional)
+              </label>
+              {{ form.review_notes }}
+              {% if form.review_notes.errors %}
+                <div class="invalid-feedback d-block">{{ form.review_notes.errors|join:", " }}</div>
+              {% endif %}
+              <div class="form-text">{{ form.review_notes.help_text }}</div>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                <span class="spinner-border spinner-border-sm me-2 d-none" id="spinner" role="status"></span>
+                <span id="btn-text">&#9835; Generate Song</span>
+              </button>
+            </div>
+
+          </form><!-- /form -->
+        </div><!-- /card-body -->
+      </div><!-- /card -->
+
+    </div><!-- /col -->
+  </div><!-- /row -->
+
+</div><!-- /container -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Show spinner while the form is submitting to give visual feedback.
+  document.getElementById('song-generation-form').addEventListener('submit', function () {
+    const btn     = document.getElementById('submit-btn');
+    const spinner = document.getElementById('spinner');
+    const text    = document.getElementById('btn-text');
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    text.textContent = 'Generating…';
+  });
+</script>
+{% endblock %}

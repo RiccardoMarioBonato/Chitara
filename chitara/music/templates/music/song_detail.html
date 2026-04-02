@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ song.title }} — Chitara{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Back link -->
+  <a href="{% url 'music:song-library' %}" class="btn btn-outline-secondary btn-sm mb-4">
+    &larr; Back to Library
+  </a>
+
+  <!-- Flash messages -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row g-4">
+
+    <!-- Left column: audio + status -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <h1 class="h3 mb-0">{{ song.title }}</h1>
+            <!-- Status badge -->
+            {% if is_completed %}
+              <span class="badge bg-success fs-6">Completed</span>
+            {% elif is_generating %}
+              <span class="badge bg-warning text-dark fs-6">Generating…</span>
+            {% elif song.generation_status == "PENDING" %}
+              <span class="badge bg-info text-dark fs-6">Pending</span>
+            {% elif is_failed %}
+              <span class="badge bg-danger fs-6">Failed</span>
+            {% endif %}
+          </div>
+
+          <p class="text-muted small mb-4">
+            Created {{ song.created_at|date:"d M Y" }} at {{ song.created_at|time:"H:i" }}
+          </p>
+
+          <!-- ── COMPLETED: audio player ── -->
+          {% if is_completed and song.audio_url %}
+            <div class="mb-4">
+              <p class="fw-semibold mb-2">&#9835; Listen</p>
+              <audio
+                controls
+                class="w-100"
+                src="{{ song.audio_url }}"
+                preload="metadata"
+              >
+                Your browser does not support the audio element.
+              </audio>
+            </div>
+            <a
+              href="{{ song.audio_url }}"
+              download="{{ song.title }}.mp3"
+              class="btn btn-outline-primary btn-sm mb-4"
+            >
+              &#8615; Download MP3
+            </a>
+
+          <!-- ── GENERATING: spinner + auto-refresh ── -->
+          {% elif is_generating %}
+            <div class="alert alert-warning d-flex align-items-center gap-3" id="generating-alert">
+              <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+              <div>
+                Your song is being generated. This page will refresh automatically.
+              </div>
+            </div>
+
+          <!-- ── PENDING ── -->
+          {% elif song.generation_status == "PENDING" %}
+            <div class="alert alert-info">
+              Your song is queued for generation. Please check back shortly.
+            </div>
+
+          <!-- ── FAILED ── -->
+          {% elif is_failed %}
+            <div class="alert alert-danger">
+              <strong>Generation failed.</strong>
+              The AI could not produce a song for this request.
+              <a href="{% url 'music:song-generate' %}" class="alert-link ms-1">Try again</a>.
+            </div>
+          {% endif %}
+
+          <!-- Action buttons -->
+          <div class="d-flex gap-2 flex-wrap mt-2">
+
+            <!-- Share / Unshare -->
+            {% if is_completed %}
+              {% if song.is_shared %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="unshare">
+                  <button type="submit" class="btn btn-outline-secondary btn-sm">
+                    Unshare
+                  </button>
+                </form>
+              {% else %}
+                <form method="post">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="share">
+                  <button type="submit" class="btn btn-outline-success btn-sm">
+                    Share
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+
+            <!-- Delete -->
+            <form method="post" onsubmit="return confirm('Delete this song permanently?');">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete">
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                Delete
+              </button>
+            </form>
+
+          </div><!-- /action buttons -->
+
+        </div><!-- /card-body -->
+      </div><!-- /card -->
+    </div><!-- /col-lg-7 -->
+
+    <!-- Right column: metadata -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-header bg-light fw-semibold">Song Details</div>
+        <ul class="list-group list-group-flush">
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Genre</span>
+            <span>{{ song.genre }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Mood</span>
+            <span>{{ song.mood }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Occasion</span>
+            <span>{{ song.occasion }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Voice Model</span>
+            <span>{{ song.singer_model }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Duration</span>
+            <span>{{ song.duration }}s</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Shared</span>
+            <span>
+              {% if song.is_shared %}
+                <span class="text-success">&#10003; Yes</span>
+              {% else %}
+                <span class="text-secondary">No</span>
+              {% endif %}
+            </span>
+          </li>
+
+          <!-- Themes -->
+          {% if themes %}
+            <li class="list-group-item">
+              <span class="text-muted d-block mb-1">Themes</span>
+              <div class="d-flex flex-wrap gap-1">
+                {% for theme in themes %}
+                  <span class="badge bg-secondary">{{ theme }}</span>
+                {% endfor %}
+              </div>
+            </li>
+          {% endif %}
+
+          <!-- Creative Notes -->
+          {% if song.review_notes %}
+            <li class="list-group-item">
+              <span class="text-muted d-block mb-1">Creative Notes</span>
+              <p class="mb-0 small">{{ song.review_notes }}</p>
+            </li>
+          {% endif %}
+
+        </ul>
+      </div><!-- /card -->
+    </div><!-- /col-lg-5 -->
+
+  </div><!-- /row -->
+
+</div><!-- /container -->
+{% endblock %}
+
+{% block extra_js %}
+{% if is_generating %}
+{# Auto-refresh every 10 seconds while the song is still being generated. #}
+<script>
+  setTimeout(function () {
+    window.location.reload();
+  }, 10000);
+</script>
+{% endif %}
+{% endblock %}
