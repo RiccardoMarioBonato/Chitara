@@ -102,6 +102,7 @@ class SunoAPIClient:
             'duration': duration,
             'model':    model,
             'customMode': True,
+            'callBackUrl': settings.SUNO_CALLBACK_URL,
         }
 
         # Attach the webhook URL only when one is configured (requires ngrok or
