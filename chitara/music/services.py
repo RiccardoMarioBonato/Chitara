@@ -13,6 +13,12 @@ from django.db.models import Count, QuerySet, Sum
 from .models import GenerationStatus, Song
 from .repositories import RepositoryError, SongRepository
 from .suno_client import APIError, SunoAPIClient
+from .strategies.factory import StrategyFactory
+from .strategies.exceptions import (
+    SunoOfflineError,
+    SunoInsufficientCreditsError,
+    SunoGenerationError as StrategyGenerationError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -105,38 +111,61 @@ class SongGenerationService:
             # --- Step 2: Mark as generating ---
             self.repository.update_generation_status(song, GenerationStatus.GENERATING)
 
-            # --- Step 3: Build prompt and call API ---
+            # --- Step 3: Build prompt and dispatch to the active strategy ---
             prompt = self._build_prompt(song)
-            result = self.api_client.generate_song(
-                prompt=prompt,
-                duration=song.duration,
+            song_request = {
+                'prompt': prompt,
+                'title': song.title,
+                'genre': str(song.genre),
+                'mood': str(song.mood),
+                'duration': song.duration,
+            }
+
+            strategy = StrategyFactory.get_strategy()
+            logger.info(
+                'Generation dispatched: song_id=%s strategy=%s',
+                song.pk, strategy,
             )
+
+            # SunoStrategy needs the Song instance to update DB from its background thread
+            if hasattr(strategy, '_poll_until_done'):
+                result = strategy.generate(song_request, song_instance=song)
+            else:
+                result = strategy.generate(song_request)
 
             # --- Step 4: Persist result ---
-            # Save the external task ID so the webhook callback can match this song.
-            if result.get('id'):
-                song.external_id = result['id']
+            # Store the external task ID so polling/callback can locate this song
+            if result.get('task_id'):
+                song.external_id = result['task_id']
                 song.save(update_fields=['external_id'])
 
-            # If Suno returned the audio_url immediately (sync mode), store it.
-            # If using webhook/async mode the callback view will fill this in later.
-            if result.get('audio_url'):
+            if result.get('status') == 'SUCCESS' and result.get('audio_url'):
+                # Mock strategy — audio is ready immediately
                 self.repository.update_audio_url(song, result['audio_url'])
                 self.repository.update_generation_status(song, GenerationStatus.COMPLETED)
-            else:
-                # Audio not ready yet — stay GENERATING; webhook will complete it.
                 logger.info(
-                    'Song %s is generating async (external_id=%s)',
-                    song.pk, result.get('id'),
+                    'Generation completed immediately: song_id=%s strategy=%s',
+                    song.pk, strategy,
+                )
+            else:
+                # Suno strategy — background thread will update when ready
+                logger.info(
+                    'Song %s is generating async (external_id=%s strategy=%s)',
+                    song.pk, result.get('task_id', ''), strategy,
                 )
 
-            logger.info(
-                'Generation completed: song_id=%s audio_url_set=%s',
-                song.pk, bool(result.get('audio_url')),
-            )
             return song
 
-        except (APIError, Exception) as exc:
+        except (SunoOfflineError, SunoInsufficientCreditsError, StrategyGenerationError) as exc:
+            logger.exception('Strategy error for song_id=%s: %s', song.pk, exc)
+            try:
+                self.repository.update_generation_status(song, GenerationStatus.FAILED)
+            except RepositoryError:
+                logger.exception(
+                    'Could not mark song %s as FAILED after strategy error.', song.pk
+                )
+            raise SongGenerationError(f'Song generation failed: {exc}') from exc
+        except Exception as exc:
             logger.exception(
                 'Generation failed for song_id=%s: %s', song.pk, exc
             )
@@ -326,3 +355,33 @@ class SongLibraryService:
             logger.info('Song %s unshared by user %s', song_id, user.pk)
 
         return song
+
+
+# ---------------------------------------------------------------------------
+# Standalone strategy-based generation function (Exercise 4)
+# ---------------------------------------------------------------------------
+
+def generate_song(song_request, force_mock=False, song_instance=None):
+    """
+    Delegate song generation to the active strategy.
+
+    Args:
+        song_request: dict or model instance with generation parameters.
+        force_mock:   If True, bypass settings and use Mock strategy.
+        song_instance: Django Song model instance for the background thread
+                       to update (required for Suno async polling).
+
+    Returns:
+        dict: { status, audio_url, image_url, task_id, duration_seconds }
+
+    Raises:
+        SunoOfflineError, SunoInsufficientCreditsError, StrategyGenerationError
+    """
+    strategy = StrategyFactory.get_strategy(force_mock=force_mock)
+    logger.info("[GenerationService] Calling %s.generate()", strategy)
+
+    # SunoStrategy needs the Song instance to update DB from background thread
+    if hasattr(strategy, '_poll_until_done') and song_instance is not None:
+        return strategy.generate(song_request, song_instance=song_instance)
+
+    return strategy.generate(song_request)
