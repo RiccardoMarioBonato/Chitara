@@ -113,3 +113,119 @@ All four operations are supported for every domain entity:
 - **Read** – Browse and search all records with filters
 - **Update** – Edit any existing record
 - **Delete** – Remove records individually or in bulk
+
+---
+
+## Exercise 4 — Strategy Pattern (Song Generation)
+
+### Overview
+
+Song generation uses the **Strategy design pattern** to decouple the
+generation backend from the rest of the application. Two strategies are
+implemented:
+
+| Strategy | Class | When to use |
+|----------|-------|-------------|
+| Mock | `MockSongGeneratorStrategy` | Local development, testing, offline |
+| Suno | `SunoSongGeneratorStrategy` | Real AI music generation via sunoapi.org |
+
+Both strategies inherit from the abstract base class `SongGeneratorStrategy`
+(defined in `music/strategies/base.py`), which enforces the common interface
+via Python's `abc.ABC` and `@abstractmethod`.
+
+### How to Switch Strategy
+
+Strategy selection is controlled by the `GENERATOR_STRATEGY` environment
+variable in your `.env` file. It is **never hard-coded** in source files.
+
+**Run in Mock mode (offline, no API key needed):**
+
+```env
+# .env
+GENERATOR_STRATEGY=mock
+```
+
+**Run in Suno mode (real API, requires API key + ngrok):**
+
+```env
+# .env
+GENERATOR_STRATEGY=suno
+SUNO_API_KEY=your_suno_api_key_here
+SUNO_CALLBACK_URL=https://your-ngrok-url.ngrok-free.app/generation/suno/callback/
+```
+
+Restart Django after changing `.env`:
+
+```bash
+python manage.py runserver
+```
+
+### Setting Up the Suno API Key
+
+1. Register at [https://sunoapi.org](https://sunoapi.org) to get your API key.
+2. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Set `SUNO_API_KEY=<your key>` in `.env`.
+4. **Never commit `.env` to Git.** It is listed in `.gitignore`.
+
+For local HTTPS (required by Suno's callback):
+
+```bash
+# Terminal 1 -- run ngrok
+ngrok http 8000
+
+# Copy the HTTPS URL (e.g. https://abc123.ngrok-free.app)
+# Set in .env:
+SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/generation/suno/callback/
+
+# Terminal 2 -- run Django
+python manage.py runserver
+```
+
+### Strategy Architecture
+
+```
+music/strategies/
+├── __init__.py         # Package marker
+├── base.py             # Abstract base class (SongGeneratorStrategy)
+├── exceptions.py       # SunoOfflineError, SunoInsufficientCreditsError
+├── mock_strategy.py    # Strategy A -- offline, instant, deterministic
+├── suno_strategy.py    # Strategy B -- real Suno API, async polling
+└── factory.py          # StrategyFactory (reads GENERATOR_STRATEGY env var)
+```
+
+The `StrategyFactory.get_strategy()` method is the single point of
+strategy selection. Controllers and services never instantiate strategies
+directly -- they always go through the factory.
+
+### Running the Demo
+
+```bash
+cd chitara
+python demo_strategy.py
+```
+
+This script:
+- Demonstrates Mock strategy (always works, no API key needed)
+- Demonstrates Factory correctly selecting each strategy
+- Attempts a live Suno API call (if `SUNO_API_KEY` is set)
+- Prints output suitable for submission as grading evidence
+
+### Strategy Pattern Class Diagram
+
+```
+SongGeneratorStrategy (ABC)
+  └── generate(song_request) [abstract]
+
+MockSongGeneratorStrategy(SongGeneratorStrategy)
+  └── generate(song_request) -> {status: "SUCCESS", audio_url: "...", ...}
+
+SunoSongGeneratorStrategy(SongGeneratorStrategy)
+  └── generate(song_request, song_instance=None) -> {status: "PENDING", task_id: "...", ...}
+      └── _poll_until_done(task_id, song_instance)  [background thread]
+
+StrategyFactory
+  └── get_strategy(force_mock=False) -> SongGeneratorStrategy instance
+```
