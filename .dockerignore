@@ -1,0 +1,9 @@
+.git
+.gitignore
+.claude
+*.md
+**/__pycache__
+**/*.pyc
+**/*.pyo
+chitara/db.sqlite3
+.env
