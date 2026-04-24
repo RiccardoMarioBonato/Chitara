@@ -7,7 +7,7 @@ Include in the project's root urls.py with:
 
 from django.urls import path
 
-from .views import FeedbackView, SongDetailView, SongGenerationView, SongLibraryView, SunoCallbackView
+from .views import FeedbackView, SongDetailView, SongGenerationView, SongLibraryView, SunoCallbackView, get_song_status
 
 app_name = 'music'
 
@@ -27,4 +27,7 @@ urlpatterns = [
     # Suno AI webhook — receives POST when audio is ready
     # Full URL: /songs/api/callback/
     path('api/callback/',    SunoCallbackView.as_view(),    name='suno-callback'),
+
+    # Strategy polling endpoint — frontend polls this to check generation status
+    path('generation/status/<int:song_id>/', get_song_status, name='song-status'),
 ]
