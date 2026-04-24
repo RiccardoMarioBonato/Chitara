@@ -16,6 +16,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
 from .forms import SongGenerationForm
 from .models import Feedback, GenerationStatus, Genre, Mood, Occasion, Song, Theme
 from .services import (
@@ -247,6 +248,26 @@ class FeedbackView(LoginRequiredMixin, CreateView):
         form.instance.user = self.request.user
         messages.success(self.request, 'Thank you for your feedback!')
         return super().form_valid(form)
+
+@require_GET
+def get_song_status(request, song_id):
+    """
+    Poll endpoint — frontend calls this every few seconds to check status.
+    GET /songs/generation/status/<song_id>/
+    """
+    try:
+        song = Song.objects.get(pk=song_id, user=request.user)
+    except Song.DoesNotExist:
+        return JsonResponse({"error": "not found"}, status=404)
+
+    return JsonResponse({
+        "song_id": song.pk,
+        "status": song.generation_status,
+        "audio_url": song.audio_url,
+        "image_url": getattr(song, "image_url", ""),
+        "duration_seconds": song.duration,
+    })
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SunoCallbackView(View):
