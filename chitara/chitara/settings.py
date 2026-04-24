@@ -109,6 +109,10 @@ SUNO_API_TIMEOUT  = int(os.getenv('SUNO_API_TIMEOUT', '30'))
 #   SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/songs/api/callback/
 SUNO_CALLBACK_URL = os.getenv('SUNO_CALLBACK_URL', '')
 
+# --- Strategy Pattern settings (Exercise 4) ---
+# Set to "mock" for offline dev / testing, "suno" for real AI generation
+GENERATOR_STRATEGY = os.getenv('GENERATOR_STRATEGY', 'mock')
+
 # Auth redirects
 # LoginRequiredMixin sends unauthenticated users here.
 LOGIN_URL          = '/accounts/login/'
