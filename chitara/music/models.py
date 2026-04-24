@@ -58,6 +58,7 @@ class Song(models.Model):
         default=GenerationStatus.PENDING
     )
     audio_url   = models.URLField(blank=True, default='')
+    image_url   = models.URLField(blank=True, default='')
     external_id = models.CharField(max_length=255, blank=True, default='')
     is_shared   = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
