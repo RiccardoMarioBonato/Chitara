@@ -306,6 +306,9 @@ Done.
 ### Google Login
 ![Google Login](screenshots/Google_Login.png)
 
+### Generate Review
+![Generate Review](screenshots/Generate_Review.png)
+
 ### Library
 ![Library](screenshots/Library.png)
 
@@ -338,3 +341,4 @@ Done.
 
 ### Admin CRUD 3
 ![Admin CRUD 3](screenshots/Admin_CRUD3.png)
+
