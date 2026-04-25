@@ -233,6 +233,68 @@ Prints Mock output, Factory selection, and (if `SUNO_API_KEY` is set) a live Sun
 
 ---
 
+## Evidence of Usage
+
+### Running the Demo
+
+```bash
+python demo_strategy.py
+```
+
+### Demo Output (Actual Run)
+
+```
+============================================================
+  Chitara Strategy Demo
+============================================================
+------------------------------------------------------------
+Mock Strategy
+------------------------------------------------------------
+  Strategy : MockSongGeneratorStrategy
+  Is base  : True
+  Status   : SUCCESS
+  Audio URL: /media/sunset.mp3
+  Duration : 229s
+  [PASS]
+------------------------------------------------------------
+Factory -> Mock
+------------------------------------------------------------
+  Returned : MockSongGeneratorStrategy
+  [PASS]
+------------------------------------------------------------
+Factory -> Suno
+------------------------------------------------------------
+  Returned : SunoSongGeneratorStrategy
+  Is base  : True
+  API key  : set
+  [PASS]
+------------------------------------------------------------
+Suno Strategy - Live API call
+------------------------------------------------------------
+  Strategy : SunoSongGeneratorStrategy
+  Status   : PENDING
+  Task ID  : 0c3ccf5db077b384e7619c8907920409
+  [PASS]
+  Polling (6s)...
+  Still processing...
+  [PASS]
+------------------------------------------------------------
+Done.
+------------------------------------------------------------
+```
+
+### What This Proves
+
+| Check | Result |
+|-------|--------|
+| Mock strategy generates instantly | ✅ status=SUCCESS, audio_url returned |
+| Both strategies extend ABC base | ✅ Is base: True for both |
+| Factory selects correct strategy | ✅ Returns correct class for mock and suno |
+| Suno API creates a real task | ✅ Task ID: `0c3ccf5db077b384e7619c8907920409` |
+| Suno status retrieval works | ✅ Polling returns status (PENDING → processing) |
+
+---
+
 ## Screenshots
 
 ### Home
@@ -247,8 +309,8 @@ Prints Mock output, Factory selection, and (if `SUNO_API_KEY` is set) a live Sun
 ### Library
 ![Library](screenshots/Library.png)
 
-### Select
-![Select](screenshots/Select.png)
+### Shared Songs
+![Shared Songs](screenshots/Shared_Songs.png)
 
 ### Generate Song
 ![Generate Song](screenshots/Generate_Song.png)

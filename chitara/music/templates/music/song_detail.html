@@ -73,12 +73,51 @@
                 <source src="{{ song.audio_url }}" type="audio/mpeg">
               </audio>
 
-              <!-- Custom player -->
-              <div class="ch-player" id="ch-player">
-                <button id="play-btn" class="ch-play-btn" disabled>&#9654;</button>
-                <span id="current-time" class="ch-time">0:00</span>
-                <input type="range" id="seek-slider" class="ch-seek flex-grow-1" value="0" min="0" step="0.1" disabled>
-                <span id="duration-time" class="ch-time">0:00</span>
+              <!-- Div-based custom player (avoids range-request seek snapping) -->
+              <div style="background:var(--ch-surface);border-radius:12px;padding:1rem 1.1rem;border:1px solid var(--ch-border)">
+
+                <!-- Progress bar -->
+                <div style="margin-bottom:0.75rem">
+                  <div id="progress-track"
+                       style="background:var(--ch-border);border-radius:999px;height:6px;
+                              cursor:pointer;position:relative">
+                    <div id="progress-fill"
+                         style="background:var(--ch-accent);height:6px;border-radius:999px;
+                                width:0%;pointer-events:none"></div>
+                    <div id="progress-thumb"
+                         style="position:absolute;top:-5px;left:0%;width:16px;height:16px;
+                                background:#a78bfa;border-radius:50%;transform:translateX(-50%);
+                                pointer-events:none"></div>
+                  </div>
+                </div>
+
+                <!-- Time row -->
+                <div class="d-flex justify-content-between mb-3">
+                  <small id="current-time" style="color:var(--ch-muted);font-family:monospace">0:00</small>
+                  <small id="duration-time" style="color:var(--ch-muted);font-family:monospace">0:00</small>
+                </div>
+
+                <!-- Controls row -->
+                <div class="d-flex align-items-center gap-3">
+                  <button onclick="chRestart()"
+                          style="background:none;border:none;color:var(--ch-muted);font-size:1.1rem;cursor:pointer;padding:0"
+                          title="Restart">&#9198;</button>
+                  <button id="play-btn"
+                          onclick="chPlayPause()"
+                          style="background:var(--ch-accent);border:none;color:#fff;
+                                 width:40px;height:40px;border-radius:50%;font-size:1rem;
+                                 cursor:pointer;display:flex;align-items:center;justify-content:center"
+                          title="Play / Pause" disabled>&#9654;</button>
+                  <button onclick="chSkip()"
+                          style="background:none;border:none;color:var(--ch-muted);font-size:1.1rem;cursor:pointer;padding:0"
+                          title="Skip to end">&#9197;</button>
+                  <div class="d-flex align-items-center gap-2 ms-auto">
+                    <span style="color:var(--ch-muted);font-size:0.85rem">&#128266;</span>
+                    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="1"
+                           style="width:72px;accent-color:var(--ch-accent)"
+                           oninput="document.getElementById('song-audio').volume=this.value">
+                  </div>
+                </div>
               </div>
 
               <div id="audio-error" class="alert alert-warning mt-2 d-none">
@@ -92,9 +131,87 @@
                 </div>
               </div>
             </div>
+
             <a href="{% url 'music:song-download' song.pk %}" class="btn btn-outline-primary btn-sm mb-4">
               &#8615; Download MP3
             </a>
+
+            <script>
+            (function () {
+              var audio    = document.getElementById('song-audio');
+              var fill     = document.getElementById('progress-fill');
+              var thumb    = document.getElementById('progress-thumb');
+              var track    = document.getElementById('progress-track');
+              var curTime  = document.getElementById('current-time');
+              var durTime  = document.getElementById('duration-time');
+              var playBtn  = document.getElementById('play-btn');
+              var errorBox = document.getElementById('audio-error');
+              var seeking  = false;
+
+              function fmt(s) {
+                s = isFinite(s) ? Math.max(0, s) : 0;
+                var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+                return m + ':' + (sec < 10 ? '0' : '') + sec;
+              }
+
+              function setBar(pct) {
+                fill.style.width = pct + '%';
+                thumb.style.left = pct + '%';
+              }
+
+              audio.addEventListener('loadedmetadata', function () {
+                durTime.textContent = fmt(audio.duration);
+                playBtn.disabled = false;
+              });
+              audio.addEventListener('durationchange', function () {
+                if (isFinite(audio.duration) && audio.duration > 0)
+                  durTime.textContent = fmt(audio.duration);
+              });
+              audio.addEventListener('error', function () {
+                errorBox.classList.remove('d-none');
+              });
+              audio.addEventListener('timeupdate', function () {
+                if (!seeking && audio.duration) {
+                  setBar((audio.currentTime / audio.duration) * 100);
+                  curTime.textContent = fmt(audio.currentTime);
+                }
+              });
+              audio.addEventListener('ended', function () {
+                playBtn.innerHTML = '&#9654;';
+              });
+
+              /* ── Seek logic ── */
+              function seekTo(e) {
+                var rect = track.getBoundingClientRect();
+                var pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                setBar(pct * 100);
+                curTime.textContent = fmt(pct * (audio.duration || 0));
+                if (audio.duration) audio.currentTime = pct * audio.duration;
+              }
+
+              track.addEventListener('mousedown', function (e) { seeking = true; seekTo(e); });
+              document.addEventListener('mousemove', function (e) { if (seeking) seekTo(e); });
+              document.addEventListener('mouseup',   function (e) { if (seeking) { seekTo(e); seeking = false; } });
+
+              track.addEventListener('touchstart', function (e) { seeking = true; seekTo(e.touches[0]); }, { passive: true });
+              document.addEventListener('touchmove', function (e) { if (seeking) seekTo(e.touches[0]); }, { passive: true });
+              document.addEventListener('touchend',  function ()  { seeking = false; });
+
+              /* ── Controls ── */
+              window.chPlayPause = function () {
+                if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
+                else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
+              };
+              window.chRestart = function () {
+                audio.currentTime = 0; audio.play(); playBtn.innerHTML = '&#9646;&#9646;';
+              };
+              window.chSkip = function () {
+                if (audio.duration) { audio.currentTime = audio.duration; playBtn.innerHTML = '&#9654;'; }
+              };
+
+              if (audio.readyState >= 1) { durTime.textContent = fmt(audio.duration); playBtn.disabled = false; }
+            })();
+            </script>
 
           <!-- ── GENERATING: spinner + auto-refresh ── -->
           {% elif is_generating %}
@@ -243,89 +360,6 @@
 {% if is_generating %}
 <script>
   setTimeout(function () { window.location.reload(); }, 10000);
-</script>
-{% endif %}
-{% if is_completed and song.audio_url %}
-<script>
-(function () {
-  var audio    = document.getElementById('song-audio');
-  var playBtn  = document.getElementById('play-btn');
-  var slider   = document.getElementById('seek-slider');
-  var curTime  = document.getElementById('current-time');
-  var durTime  = document.getElementById('duration-time');
-  var errorBox = document.getElementById('audio-error');
-  var dragging = false;
-
-  function fmt(s) {
-    s = isFinite(s) ? Math.max(0, s) : 0;
-    var m = Math.floor(s / 60);
-    var sec = Math.floor(s % 60);
-    return m + ':' + (sec < 10 ? '0' : '') + sec;
-  }
-
-  function applyDuration(dur) {
-    if (isFinite(dur) && dur > 0) {
-      slider.max = dur;
-      durTime.textContent = fmt(dur);
-    }
-  }
-
-  function enable() {
-    playBtn.disabled = false;
-    slider.disabled  = false;
-    applyDuration(audio.duration);
-  }
-
-  /* Fix race condition: local files may already have metadata when the script runs */
-  if (audio.readyState >= 1) {
-    enable();
-  } else {
-    audio.addEventListener('loadedmetadata', enable);
-  }
-
-  /* Fallback: duration sometimes arrives late (e.g. no range-request support) */
-  audio.addEventListener('durationchange', function () {
-    applyDuration(audio.duration);
-  });
-
-  audio.addEventListener('error', function () {
-    errorBox.classList.remove('d-none');
-  });
-
-  audio.addEventListener('timeupdate', function () {
-    if (!dragging) {
-      slider.value = audio.currentTime;
-      curTime.textContent = fmt(audio.currentTime);
-    }
-  });
-
-  audio.addEventListener('ended', function () {
-    playBtn.innerHTML = '&#9654;';
-    dragging = false;
-  });
-
-  playBtn.addEventListener('click', function () {
-    if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
-    else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
-  });
-
-  slider.addEventListener('mousedown',  function () { dragging = true; });
-  slider.addEventListener('touchstart', function () { dragging = true; }, { passive: true });
-
-  slider.addEventListener('input', function () {
-    curTime.textContent = fmt(parseFloat(slider.value));
-  });
-
-  slider.addEventListener('change', function () {
-    dragging = false;
-    audio.currentTime = parseFloat(slider.value);
-  });
-
-  slider.addEventListener('touchend', function () {
-    dragging = false;
-    audio.currentTime = parseFloat(slider.value);
-  });
-})();
 </script>
 {% endif %}
 {% endblock %}

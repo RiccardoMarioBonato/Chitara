@@ -13,12 +13,118 @@
 
         {% if song.audio_url %}
           <p class="fw-semibold mb-2">&#9835; Listen</p>
-          <audio controls class="w-100 mb-3" src="{{ song.audio_url }}" preload="metadata">
-            Your browser does not support the audio element.
+
+          <audio id="shared-audio" preload="metadata" style="display:none">
+            <source src="{{ song.audio_url }}" type="audio/mpeg">
           </audio>
+
+          <div style="background:#1c1c3a;border-radius:12px;padding:1rem 1.1rem;border:1px solid #2e2e5a;margin-bottom:1rem">
+            <div style="margin-bottom:0.75rem">
+              <div id="sh-track"
+                   style="background:#2e2e5a;border-radius:999px;height:6px;cursor:pointer;position:relative">
+                <div id="sh-fill"
+                     style="background:#7c3aed;height:6px;border-radius:999px;width:0%;pointer-events:none"></div>
+                <div id="sh-thumb"
+                     style="position:absolute;top:-5px;left:0%;width:16px;height:16px;
+                            background:#a78bfa;border-radius:50%;transform:translateX(-50%);pointer-events:none"></div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+              <small id="sh-cur"  style="color:#7e8ea8;font-family:monospace">0:00</small>
+              <small id="sh-dur"  style="color:#7e8ea8;font-family:monospace">0:00</small>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <button onclick="shRestart()"
+                      style="background:none;border:none;color:#7e8ea8;font-size:1.1rem;cursor:pointer;padding:0"
+                      title="Restart">&#9198;</button>
+              <button id="sh-play"
+                      onclick="shPlayPause()"
+                      style="background:#7c3aed;border:none;color:#fff;width:40px;height:40px;
+                             border-radius:50%;font-size:1rem;cursor:pointer;
+                             display:flex;align-items:center;justify-content:center"
+                      title="Play / Pause" disabled>&#9654;</button>
+              <button onclick="shSkip()"
+                      style="background:none;border:none;color:#7e8ea8;font-size:1.1rem;cursor:pointer;padding:0"
+                      title="Skip to end">&#9197;</button>
+              <div class="d-flex align-items-center gap-2 ms-auto">
+                <span style="color:#7e8ea8;font-size:0.85rem">&#128266;</span>
+                <input type="range" min="0" max="1" step="0.05" value="1"
+                       style="width:72px;accent-color:#7c3aed"
+                       oninput="document.getElementById('shared-audio').volume=this.value">
+              </div>
+            </div>
+          </div>
+
           <a href="{{ song.audio_url }}" target="_blank" class="btn btn-outline-primary btn-sm mb-4">
             &#8615; Download MP3
           </a>
+
+          <script>
+          (function () {
+            var audio   = document.getElementById('shared-audio');
+            var fill    = document.getElementById('sh-fill');
+            var thumb   = document.getElementById('sh-thumb');
+            var track   = document.getElementById('sh-track');
+            var curEl   = document.getElementById('sh-cur');
+            var durEl   = document.getElementById('sh-dur');
+            var playBtn = document.getElementById('sh-play');
+            var seeking = false;
+
+            function fmt(s) {
+              s = isFinite(s) ? Math.max(0, s) : 0;
+              var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+              return m + ':' + (sec < 10 ? '0' : '') + sec;
+            }
+            function setBar(pct) {
+              fill.style.width = pct + '%';
+              thumb.style.left = pct + '%';
+            }
+
+            audio.addEventListener('loadedmetadata', function () {
+              durEl.textContent = fmt(audio.duration); playBtn.disabled = false;
+            });
+            audio.addEventListener('durationchange', function () {
+              if (isFinite(audio.duration) && audio.duration > 0)
+                durEl.textContent = fmt(audio.duration);
+            });
+            audio.addEventListener('timeupdate', function () {
+              if (!seeking && audio.duration) {
+                setBar((audio.currentTime / audio.duration) * 100);
+                curEl.textContent = fmt(audio.currentTime);
+              }
+            });
+            audio.addEventListener('ended', function () { playBtn.innerHTML = '&#9654;'; });
+
+            function seekTo(e) {
+              var rect = track.getBoundingClientRect();
+              var pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+              setBar(pct * 100);
+              curEl.textContent = fmt(pct * (audio.duration || 0));
+              if (audio.duration) audio.currentTime = pct * audio.duration;
+            }
+
+            track.addEventListener('mousedown', function (e) { seeking = true; seekTo(e); });
+            document.addEventListener('mousemove', function (e) { if (seeking) seekTo(e); });
+            document.addEventListener('mouseup',   function (e) { if (seeking) { seekTo(e); seeking = false; } });
+
+            track.addEventListener('touchstart', function (e) { seeking = true; seekTo(e.touches[0]); }, { passive: true });
+            document.addEventListener('touchmove', function (e) { if (seeking) seekTo(e.touches[0]); }, { passive: true });
+            document.addEventListener('touchend',  function ()  { seeking = false; });
+
+            window.shPlayPause = function () {
+              if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
+              else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
+            };
+            window.shRestart = function () {
+              audio.currentTime = 0; audio.play(); playBtn.innerHTML = '&#9646;&#9646;';
+            };
+            window.shSkip = function () {
+              if (audio.duration) { audio.currentTime = audio.duration; playBtn.innerHTML = '&#9654;'; }
+            };
+
+            if (audio.readyState >= 1) { durEl.textContent = fmt(audio.duration); playBtn.disabled = false; }
+          })();
+          </script>
         {% endif %}
 
         <ul class="list-group list-group-flush mt-3">
