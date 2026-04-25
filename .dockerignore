@@ -1,0 +1,6 @@
+.git/
+.gitignore
+chitara/db.sqlite3
+chitara/**/__pycache__/
+chitara/**/*.pyc
+chitara/**/*.pyo
