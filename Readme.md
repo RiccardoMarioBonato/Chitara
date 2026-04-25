@@ -58,6 +58,16 @@ The container automatically:
 The SQLite database is stored in `./data/db.sqlite3` on your host machine and
 survives container restarts.
 
+**(Optional) Create an admin account**
+
+While the container is running, open a second terminal and run:
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+Then log in at [http://localhost:8000/admin](http://localhost:8000/admin).
+
 **To stop:**
 ```bash
 docker compose down
