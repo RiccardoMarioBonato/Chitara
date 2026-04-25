@@ -124,18 +124,47 @@
 
             <!-- Duration -->
             <div class="mb-3">
-              <label for="durationSlider" class="form-label fw-semibold">
-                Duration: <span id="durationValue">30s</span> <span class="text-danger">*</span>
+              <label class="form-label fw-semibold" for="id_duration">
+                Duration: <strong id="dur-display">120s</strong>
+                <span class="text-muted" style="font-size:0.8rem">(30–300 seconds)</span>
+                <span class="text-danger">*</span>
               </label>
-              {{ form.duration }}
-              {% if form.duration.errors %}
-                <div class="invalid-feedback d-block">{{ form.duration.errors|join:", " }}</div>
-              {% endif %}
+
+              {# Hidden number input — what Django reads on submit #}
+              <input type="hidden" name="duration" id="id_duration"
+                     value="{{ form.duration.value|default:'120' }}">
+
+              {# Visual slider — purely cosmetic, JS syncs to hidden input #}
+              <input type="range" id="dur-slider"
+                     min="30" max="300" step="5"
+                     value="{{ form.duration.value|default:'120' }}"
+                     class="form-range"
+                     oninput="chitaraDurSync(this.value)">
+
               <div class="d-flex justify-content-between">
-                <small class="text-muted">10s</small>
-                <small class="text-muted">300s</small>
+                <small class="text-muted">30s</small>
+                <small class="text-muted">5 min</small>
               </div>
+
+              {% if form.duration.errors %}
+                <div class="text-danger small mt-1">{{ form.duration.errors }}</div>
+              {% endif %}
             </div>
+
+            <script>
+              function chitaraDurSync(val) {
+                var v = parseInt(val, 10);
+                if (isNaN(v) || v < 30)  v = 30;
+                if (v > 300) v = 300;
+                document.getElementById('id_duration').value     = v;
+                document.getElementById('dur-display').textContent = v + 's';
+                document.getElementById('dur-slider').value      = v;
+              }
+              (function () {
+                var stored = parseInt(document.getElementById('id_duration').value, 10);
+                chitaraDurSync(isNaN(stored) ? 120 : stored);
+              })();
+            </script>
 
             <!-- Review Notes -->
             <div class="mb-4">
@@ -170,16 +199,6 @@
 {% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    var slider = document.getElementById('durationSlider');
-    var label  = document.getElementById('durationValue');
-    if (slider && label) {
-      label.textContent = slider.value + 's';
-      slider.addEventListener('input', function () {
-        label.textContent = this.value + 's';
-      });
-    }
-
-    // Show spinner while the form is submitting.
     document.getElementById('song-generation-form').addEventListener('submit', function () {
       var btn     = document.getElementById('submit-btn');
       var spinner = document.getElementById('spinner');

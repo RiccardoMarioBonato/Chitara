@@ -1,8 +1,12 @@
 import logging
+import os
+import urllib.parse
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import DetailView
@@ -27,6 +31,16 @@ class SongDetailView(LoginRequiredMixin, DetailView):
         ctx['is_generating'] = song.generation_status == GenerationStatus.GENERATING
         ctx['is_failed'] = song.generation_status == GenerationStatus.FAILED
         ctx['themes'] = song.themes.all()
+
+        pks = list(Song.objects.filter(user=self.request.user).order_by('-created_at').values_list('pk', flat=True))
+        try:
+            idx = pks.index(song.pk)
+            ctx['prev_pk'] = pks[idx - 1] if idx > 0 else None
+            ctx['next_pk'] = pks[idx + 1] if idx < len(pks) - 1 else None
+        except ValueError:
+            ctx['prev_pk'] = None
+            ctx['next_pk'] = None
+
         return ctx
 
     def post(self, request, *args, **kwargs):
@@ -75,4 +89,17 @@ def download_song(request, pk):
     if not song.audio_url:
         messages.error(request, 'No audio file available for this song.')
         return redirect(reverse_lazy('music:song-detail', kwargs={'pk': pk}))
+
+    if song.audio_url.startswith('/media/'):
+        relative = song.audio_url[len('/media/'):]
+        file_path = settings.MEDIA_ROOT / relative
+        if not os.path.exists(file_path):
+            messages.error(request, 'Audio file not found.')
+            return redirect(reverse_lazy('music:song-detail', kwargs={'pk': pk}))
+        filename = f"{song.title}.mp3".replace('/', '_')
+        response = FileResponse(open(file_path, 'rb'), content_type='audio/mpeg')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    # External URL — redirect and let the browser/server handle it
     return redirect(song.audio_url)

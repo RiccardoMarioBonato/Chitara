@@ -9,6 +9,7 @@ from django.urls import path
 
 from .views import (
     FeedbackView,
+    SharedSongListView,
     SharedSongView,
     SongDetailView,
     SongGenerationPreviewView,
@@ -27,6 +28,7 @@ urlpatterns = [
     path('',                                       SongLibraryView.as_view(),           name='song-library'),
     path('<int:pk>/',                              SongDetailView.as_view(),            name='song-detail'),
     path('feedback/',                              FeedbackView.as_view(),              name='feedback'),
+    path('shared/',                                  SharedSongListView.as_view(),        name='shared-song-list'),
     path('shared/<int:song_id>/',                  SharedSongView.as_view(),            name='shared-song'),
     path('api/callback/',                          SunoCallbackView.as_view(),          name='suno-callback'),
     path('generation/status/<int:song_id>/',       get_song_status,                     name='song-status'),

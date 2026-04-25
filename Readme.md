@@ -17,17 +17,15 @@ A Django 5.2 web application for generating AI-powered music using the Strategy 
 
 ---
 
-## Quickstart — Docker (recommended)
+## Quickstart
 
-### Before you build — required steps
-
-**Step 1 — Copy the environment file**
+### Step 1 — Copy the environment file
 
 ```bash
 cp chitara/.env.example chitara/.env
 ```
 
-**Step 2 — Edit `chitara/.env`**
+### Step 2 — Edit `chitara/.env`
 
 Open the file and fill in any values you need:
 
@@ -37,62 +35,57 @@ Open the file and fill in any values you need:
 | Real Suno AI generation | `GENERATOR_STRATEGY=suno` + `SUNO_API_KEY=<your key>` + `SUNO_CALLBACK_URL=<ngrok URL>` |
 | Google OAuth login | `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` |
 
-> The `.env` file must exist before running `docker compose` — Docker reads it
-> at startup and will error if the file is missing.
-
-**Step 3 — Build and start**
+### Step 3 — Create and activate a virtual environment
 
 ```bash
-docker compose up --build
+cd chitara
+
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Mac/Linux
+source venv/bin/activate
 ```
 
-Then open: [http://localhost:8000](http://localhost:8000)
-
-The container automatically:
-1. Creates the `/app/data/` directory for the database
-2. Runs all database migrations
-3. Seeds Genres, Moods, Occasions, Themes
-4. Seeds SingerModels (Soprano, Alto, Tenor, etc.)
-5. Starts the development server on port 8000
-
-The SQLite database is stored in `./data/db.sqlite3` on your host machine and
-survives container restarts.
-
-**(Optional) Create an admin account**
-
-While the container is running, open a second terminal and run:
+### Step 4 — Install dependencies
 
 ```bash
-docker compose exec web python manage.py createsuperuser
+pip install -r requirements.txt
+```
+
+### Step 5 — Run migrations
+
+```bash
+python manage.py migrate
+```
+
+Genres, Moods, Occasions, Themes and SingerModels are seeded automatically on first startup — no extra commands needed.
+
+### Step 6 — (Optional) Create an admin account
+
+```bash
+python manage.py createsuperuser
 ```
 
 Then log in at [http://localhost:8000/admin](http://localhost:8000/admin).
 
-**To stop:**
+### Step 7 — Start the server
+
 ```bash
-docker compose down
+python manage.py runserver
 ```
 
-**To stop and wipe the database:**
-```bash
-docker compose down
-rm -rf data/
-```
+Then open: [http://localhost:8000](http://localhost:8000)
 
 ---
 
 ## Environment Variables
 
 All variables live in `chitara/.env`. A template with every key is provided in
-`chitara/.env.example` — copy it before doing anything else:
-
-```bash
-cp chitara/.env.example chitara/.env
-```
+`chitara/.env.example` — copy it before doing anything else.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DB_PATH` | No | `<BASE_DIR>/data/db.sqlite3` | Absolute path to the SQLite file. Set to `/app/data/db.sqlite3` inside Docker (already in `.env.example`) |
 | `GENERATOR_STRATEGY` | No | `mock` | `mock` for offline dev, `suno` for real API |
 | `SUNO_API_KEY` | If Suno | — | API key from sunoapi.org |
 | `SUNO_CALLBACK_URL` | If Suno | — | Your ngrok HTTPS URL + `/songs/api/callback/` |
@@ -103,73 +96,36 @@ cp chitara/.env.example chitara/.env
 
 ---
 
-## Manual Setup (without Docker)
-
-```bash
-# 1. Copy and edit the environment file first
-cp chitara/.env.example chitara/.env
-# open chitara/.env and fill in any values you need
-
-# 2. Create and activate a virtual environment
-cd chitara
-
-python -m venv venv
-# Windows
-venv\Scripts\activate
-# Mac/Linux
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run migrations and seed data
-python manage.py migrate
-python populate_initial_data.py
-python populate_suno_models.py
-
-# 5. (Optional) Create an admin account
-python manage.py createsuperuser
-
-# 6. Start the server
-python manage.py runserver
-```
-
----
-
 ## Project Structure
 
 ```
 Chitara/
-├── Dockerfile
-├── docker-compose.yml
-├── docker-entrypoint.sh
-├── data/                           # SQLite volume (created on first run, gitignored)
-│   └── db.sqlite3
-├── diagrams/                       # UML diagrams (domain model, class, sequence)
+├── diagrams/                           # UML diagrams (domain model, class, sequence)
 └── chitara/
     ├── manage.py
     ├── requirements.txt
-    ├── .env                        # local secrets — never commit
+    ├── .env                            # local secrets — never commit
     ├── .env.example
-    ├── populate_initial_data.py    # seeds Genres, Moods, Occasions, Themes
-    ├── populate_suno_models.py     # seeds SingerModels
-    ├── demo_strategy.py            # strategy pattern demo script
-    ├── chitara/                    # Django project settings
+    ├── populate_initial_data.py        # optional manual seed script
+    ├── populate_suno_models.py         # optional manual seed script
+    ├── demo_strategy.py                # strategy pattern demo script
+    ├── chitara/                        # Django project settings
     │   ├── settings.py
     │   ├── urls.py
     │   └── wsgi.py
-    └── music/                      # main app — one class per file
-        ├── models/                 # Song, Genre, Mood, Occasion, Theme, SingerModel, Feedback
-        ├── views/                  # SongGenerationView, LibraryView, DetailView, …
-        ├── services/               # SongGenerationService, SongLibraryService
-        ├── repositories/           # SongRepository
-        ├── suno_client/            # SunoAPIClient, APIError
-        ├── admin/                  # per-model admin registrations
+    └── music/                          # main app — one class per file
+        ├── models/                     # Song, Genre, Mood, Occasion, Theme, SingerModel, Feedback
+        ├── views/                      # SongGenerationView, LibraryView, DetailView, …
+        ├── services/                   # SongGenerationService, SongLibraryService
+        ├── repositories/               # SongRepository
+        ├── suno_client/                # SunoAPIClient, APIError
+        ├── admin/                      # per-model admin registrations
+        ├── apps.py                     # MusicConfig — auto-seeds lookup data on startup
         ├── strategies/
-        │   ├── base.py             # abstract SongGeneratorStrategy (ABC)
-        │   ├── factory.py          # StrategyFactory — reads GENERATOR_STRATEGY
-        │   ├── mock_strategy.py    # offline / deterministic
-        │   ├── suno_strategy.py    # real Suno API + async polling
+        │   ├── base.py                 # abstract SongGeneratorStrategy (ABC)
+        │   ├── factory.py              # StrategyFactory — reads GENERATOR_STRATEGY
+        │   ├── mock_strategy.py        # offline / deterministic
+        │   ├── suno_strategy.py        # real Suno API + async polling
         │   └── exceptions.py
         ├── forms.py
         ├── urls.py
@@ -191,6 +147,19 @@ Chitara/
 | `Feedback` | User-submitted feedback after generation |
 
 Admin panel at `/admin` supports full CRUD on all models.
+
+---
+
+## Architecture Diagrams
+
+### Domain Model
+![Domain Model](chitara/diagrams/domain_model.png)
+
+### Class Diagram
+![Class Diagram](chitara/diagrams/class_diagram.png)
+
+### Sequence Diagram — Song Generation Flow
+![Sequence Diagram](chitara/diagrams/sequence_diagram.png)
 
 ---
 
@@ -232,7 +201,7 @@ SUNO_API_KEY=your_key_here
 SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/songs/api/callback/
 
 # Terminal 2
-docker compose up --build
+python manage.py runserver
 ```
 
 ---

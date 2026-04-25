@@ -115,15 +115,15 @@ class SongGenerationService:
             raise InvalidGenerationInput('Title must be at least 3 characters.')
         if len(title) > 255:
             raise InvalidGenerationInput('Title cannot exceed 255 characters.')
-        if duration is None:
+        if duration is None or duration == '':
             raise InvalidGenerationInput('Duration is required.')
         try:
             duration_int = int(duration)
         except (ValueError, TypeError):
             raise InvalidGenerationInput('Duration must be a number.')
-        if not (10 <= duration_int <= 300):
+        if not (30 <= duration_int <= 300):
             raise InvalidGenerationInput(
-                f'Duration must be between 10 and 300 seconds (got {duration_int}s).'
+                f'Duration must be between 30 and 300 seconds (got {duration_int}s).'
             )
 
         for field in ('singer_model', 'genre', 'mood', 'occasion'):

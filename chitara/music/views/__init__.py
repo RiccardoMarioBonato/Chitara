@@ -1,4 +1,5 @@
 from .feedback_view import FeedbackView
+from .shared_song_list_view import SharedSongListView
 from .shared_song_view import SharedSongView
 from .song_detail_view import SongDetailView, download_song
 from .song_generation_preview_view import SongGenerationPreviewView
@@ -9,6 +10,7 @@ from .suno_callback_view import SunoCallbackView
 
 __all__ = [
     'FeedbackView',
+    'SharedSongListView',
     'SharedSongView',
     'SongDetailView',
     'SongGenerationPreviewView',

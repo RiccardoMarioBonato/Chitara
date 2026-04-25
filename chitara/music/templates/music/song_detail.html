@@ -6,10 +6,28 @@
 {% block content %}
 <div class="container py-4">
 
-  <!-- Back link -->
-  <a href="{% url 'music:song-library' %}" class="btn btn-outline-secondary btn-sm mb-4">
-    &larr; Back to Library
-  </a>
+  <!-- Back + prev/next nav -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <a href="{% url 'music:song-library' %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+      &larr; Library
+    </a>
+    <div class="d-flex gap-2">
+      {% if prev_pk %}
+        <a href="{% url 'music:song-detail' prev_pk %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+          &larr; Newer
+        </a>
+      {% else %}
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>&larr; Newer</button>
+      {% endif %}
+      {% if next_pk %}
+        <a href="{% url 'music:song-detail' next_pk %}" class="btn btn-outline-secondary btn-sm rounded-pill">
+          Older &rarr;
+        </a>
+      {% else %}
+        <button class="btn btn-outline-secondary btn-sm rounded-pill" disabled>Older &rarr;</button>
+      {% endif %}
+    </div>
+  </div>
 
   <!-- Flash messages -->
   {% if messages %}
@@ -50,10 +68,19 @@
           {% if is_completed and song.audio_url %}
             <div class="mb-4">
               <p class="fw-semibold mb-2">&#9835; Listen</p>
-              <audio controls preload="metadata" class="w-100" id="song-audio-player">
+
+              <audio id="song-audio" preload="metadata" style="display:none">
                 <source src="{{ song.audio_url }}" type="audio/mpeg">
-                Your browser does not support the audio element.
               </audio>
+
+              <!-- Custom player -->
+              <div class="ch-player" id="ch-player">
+                <button id="play-btn" class="ch-play-btn" disabled>&#9654;</button>
+                <span id="current-time" class="ch-time">0:00</span>
+                <input type="range" id="seek-slider" class="ch-seek flex-grow-1" value="0" min="0" step="0.1" disabled>
+                <span id="duration-time" class="ch-time">0:00</span>
+              </div>
+
               <div id="audio-error" class="alert alert-warning mt-2 d-none">
                 &#9888; Audio could not be loaded — the file may still be processing or the link has expired.
                 <div class="mt-2">
@@ -149,7 +176,7 @@
     <!-- Right column: metadata -->
     <div class="col-lg-5">
       <div class="card shadow-sm">
-        <div class="card-header bg-light fw-semibold">Song Details</div>
+        <div class="card-header fw-semibold">Song Details</div>
         <ul class="list-group list-group-flush">
 
           <li class="list-group-item d-flex justify-content-between">
@@ -220,28 +247,85 @@
 {% endif %}
 {% if is_completed and song.audio_url %}
 <script>
-  (function () {
-    var player = document.getElementById('song-audio-player');
-    var errorBox = document.getElementById('audio-error');
-    if (!player || !errorBox) return;
+(function () {
+  var audio    = document.getElementById('song-audio');
+  var playBtn  = document.getElementById('play-btn');
+  var slider   = document.getElementById('seek-slider');
+  var curTime  = document.getElementById('current-time');
+  var durTime  = document.getElementById('duration-time');
+  var errorBox = document.getElementById('audio-error');
+  var dragging = false;
 
-    function showError() { errorBox.classList.remove('d-none'); }
+  function fmt(s) {
+    s = isFinite(s) ? Math.max(0, s) : 0;
+    var m = Math.floor(s / 60);
+    var sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
 
-    // Hard load failure (404, CORS, decode error)
-    player.addEventListener('error', showError);
+  function applyDuration(dur) {
+    if (isFinite(dur) && dur > 0) {
+      slider.max = dur;
+      durTime.textContent = fmt(dur);
+    }
+  }
 
-    // File loaded but has no playable content (0 bytes / invalid)
-    player.addEventListener('loadedmetadata', function () {
-      if (!isFinite(player.duration) || player.duration === 0) showError();
-    });
+  function enable() {
+    playBtn.disabled = false;
+    slider.disabled  = false;
+    applyDuration(audio.duration);
+  }
 
-    // Fallback: if nothing is ready after 10 seconds, show the error
-    var timeout = setTimeout(function () {
-      if (player.readyState < 2) showError();
-    }, 10000);
+  /* Fix race condition: local files may already have metadata when the script runs */
+  if (audio.readyState >= 1) {
+    enable();
+  } else {
+    audio.addEventListener('loadedmetadata', enable);
+  }
 
-    player.addEventListener('canplay', function () { clearTimeout(timeout); });
-  })();
+  /* Fallback: duration sometimes arrives late (e.g. no range-request support) */
+  audio.addEventListener('durationchange', function () {
+    applyDuration(audio.duration);
+  });
+
+  audio.addEventListener('error', function () {
+    errorBox.classList.remove('d-none');
+  });
+
+  audio.addEventListener('timeupdate', function () {
+    if (!dragging) {
+      slider.value = audio.currentTime;
+      curTime.textContent = fmt(audio.currentTime);
+    }
+  });
+
+  audio.addEventListener('ended', function () {
+    playBtn.innerHTML = '&#9654;';
+    dragging = false;
+  });
+
+  playBtn.addEventListener('click', function () {
+    if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
+    else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
+  });
+
+  slider.addEventListener('mousedown',  function () { dragging = true; });
+  slider.addEventListener('touchstart', function () { dragging = true; }, { passive: true });
+
+  slider.addEventListener('input', function () {
+    curTime.textContent = fmt(parseFloat(slider.value));
+  });
+
+  slider.addEventListener('change', function () {
+    dragging = false;
+    audio.currentTime = parseFloat(slider.value);
+  });
+
+  slider.addEventListener('touchend', function () {
+    dragging = false;
+    audio.currentTime = parseFloat(slider.value);
+  });
+})();
 </script>
 {% endif %}
 {% endblock %}

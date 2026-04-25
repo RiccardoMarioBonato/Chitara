@@ -8,7 +8,7 @@ from django import forms
 
 from .models import Genre, Mood, Occasion, SingerModel, Song, Theme
 
-DURATION_MIN = 10
+DURATION_MIN = 30
 DURATION_MAX = 300
 
 
@@ -85,21 +85,13 @@ class SongGenerationForm(forms.ModelForm):
     duration = forms.IntegerField(
         min_value=DURATION_MIN,
         max_value=DURATION_MAX,
-        initial=30,
-        widget=forms.NumberInput(attrs={
-            'type':    'range',
-            'min':     str(DURATION_MIN),
-            'max':     str(DURATION_MAX),
-            'step':    '5',
-            'class':   'form-range',
-            'id':      'durationSlider',
-        }),
-        help_text=f'Song length in seconds ({DURATION_MIN}–{DURATION_MAX}).',
+        initial=120,
+        required=True,
         error_messages={
             'required':  'Duration is required.',
-            'min_value': f'Duration must be at least {DURATION_MIN} seconds.',
-            'max_value': f'Duration cannot exceed {DURATION_MAX} seconds.',
-            'invalid':   'Enter a valid number of seconds.',
+            'invalid':   'Duration must be a whole number.',
+            'min_value': 'Minimum duration is 30 seconds.',
+            'max_value': 'Maximum duration is 300 seconds.',
         },
     )
 
@@ -135,15 +127,11 @@ class SongGenerationForm(forms.ModelForm):
         return title
 
     def clean_duration(self) -> int:
-        """Redundant guard — Django's min_value/max_value handle range,
-        but this keeps the rule explicit and easy to find."""
         duration: int = self.cleaned_data.get('duration')
-
         if duration is not None and not (DURATION_MIN <= duration <= DURATION_MAX):
             raise forms.ValidationError(
                 f'Duration must be between {DURATION_MIN} and {DURATION_MAX} seconds.'
             )
-
         return duration
 
     # ------------------------------------------------------------------

@@ -4,7 +4,7 @@ from .base import SongGeneratorStrategy
 
 logger = logging.getLogger(__name__)
 
-MOCK_AUDIO_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+MOCK_AUDIO_URL = "/media/sunset.mp3"
 MOCK_IMAGE_URL = "https://picsum.photos/seed/chitara-mock/400/400"
 MOCK_DURATION_SECONDS = 229
 
