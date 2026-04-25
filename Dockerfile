@@ -12,6 +12,8 @@ COPY chitara/ .
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
+RUN mkdir -p /app/data
+
 EXPOSE 8000
 
 ENTRYPOINT ["/docker-entrypoint.sh"]

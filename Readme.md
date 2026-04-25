@@ -19,7 +19,28 @@ A Django 5.2 web application for generating AI-powered music using the Strategy 
 
 ## Quickstart — Docker (recommended)
 
-**One command to build, migrate, seed data, and start:**
+### Before you build — required steps
+
+**Step 1 — Copy the environment file**
+
+```bash
+cp chitara/.env.example chitara/.env
+```
+
+**Step 2 — Edit `chitara/.env`**
+
+Open the file and fill in any values you need:
+
+| What you want | What to set |
+|---|---|
+| Offline / mock mode (default) | Nothing — defaults work out of the box |
+| Real Suno AI generation | `GENERATOR_STRATEGY=suno` + `SUNO_API_KEY=<your key>` + `SUNO_CALLBACK_URL=<ngrok URL>` |
+| Google OAuth login | `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` |
+
+> The `.env` file must exist before running `docker compose` — Docker reads it
+> at startup and will error if the file is missing.
+
+**Step 3 — Build and start**
 
 ```bash
 docker compose up --build
@@ -28,21 +49,32 @@ docker compose up --build
 Then open: [http://localhost:8000](http://localhost:8000)
 
 The container automatically:
-1. Runs all database migrations
-2. Seeds Genres, Moods, Occasions, Themes
-3. Seeds SingerModels (Soprano, Alto, Tenor, etc.)
-4. Starts the development server on port 8000
+1. Creates the `/app/data/` directory for the database
+2. Runs all database migrations
+3. Seeds Genres, Moods, Occasions, Themes
+4. Seeds SingerModels (Soprano, Alto, Tenor, etc.)
+5. Starts the development server on port 8000
 
-To stop:
+The SQLite database is stored in `./data/db.sqlite3` on your host machine and
+survives container restarts.
+
+**To stop:**
 ```bash
 docker compose down
+```
+
+**To stop and wipe the database:**
+```bash
+docker compose down
+rm -rf data/
 ```
 
 ---
 
 ## Environment Variables
 
-Copy `.env.example` to `chitara/.env` and fill in your values:
+All variables live in `chitara/.env`. A template with every key is provided in
+`chitara/.env.example` — copy it before doing anything else:
 
 ```bash
 cp chitara/.env.example chitara/.env
@@ -50,6 +82,7 @@ cp chitara/.env.example chitara/.env
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
+| `DB_PATH` | No | `<BASE_DIR>/data/db.sqlite3` | Absolute path to the SQLite file. Set to `/app/data/db.sqlite3` inside Docker (already in `.env.example`) |
 | `GENERATOR_STRATEGY` | No | `mock` | `mock` for offline dev, `suno` for real API |
 | `SUNO_API_KEY` | If Suno | — | API key from sunoapi.org |
 | `SUNO_CALLBACK_URL` | If Suno | — | Your ngrok HTTPS URL + `/songs/api/callback/` |

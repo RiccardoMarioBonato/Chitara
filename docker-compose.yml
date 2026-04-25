@@ -6,7 +6,4 @@ services:
     env_file:
       - chitara/.env
     volumes:
-      - sqlite_data:/app/db.sqlite3
-
-volumes:
-  sqlite_data:
+      - ./data:/app/data
