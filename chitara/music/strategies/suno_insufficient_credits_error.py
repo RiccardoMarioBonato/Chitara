@@ -1,0 +1,2 @@
+class SunoInsufficientCreditsError(Exception):
+    pass

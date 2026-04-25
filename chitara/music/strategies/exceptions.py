@@ -1,10 +1,5 @@
-class SunoOfflineError(Exception):
-    pass
+from .suno_generation_error import SunoGenerationError
+from .suno_insufficient_credits_error import SunoInsufficientCreditsError
+from .suno_offline_error import SunoOfflineError
 
-
-class SunoInsufficientCreditsError(Exception):
-    pass
-
-
-class SunoGenerationError(Exception):
-    pass
+__all__ = ['SunoOfflineError', 'SunoInsufficientCreditsError', 'SunoGenerationError']

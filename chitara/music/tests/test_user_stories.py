@@ -70,7 +70,16 @@ def make_completed_song(user, lookup, title='Test Song'):
 # AUTH USER STORIES
 # ============================================================
 
-@override_settings(**MOCK_SETTINGS)
+@override_settings(
+    GENERATOR_STRATEGY='mock',
+    SOCIALACCOUNT_PROVIDERS={
+        'google': {
+            'SCOPE': ['profile', 'email'],
+            'AUTH_PARAMS': {'access_type': 'online'},
+            'OAUTH_PKCE_ENABLED': True,
+        }
+    },
+)
 class US1_GoogleLogin(TestCase):
     """
     US-1: As a user, I want to log in using Google so I don't need
@@ -81,6 +90,7 @@ class US1_GoogleLogin(TestCase):
         from allauth.socialaccount.models import SocialApp
         from django.contrib.sites.models import Site
         site = Site.objects.get_current()
+        SocialApp.objects.filter(provider='google').delete()
         app = SocialApp.objects.create(
             provider='google',
             name='Google',

@@ -1,0 +1,2 @@
+class InvalidGenerationInput(Exception):
+    pass

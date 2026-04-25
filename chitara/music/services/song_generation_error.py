@@ -1,0 +1,2 @@
+class SongGenerationError(Exception):
+    pass

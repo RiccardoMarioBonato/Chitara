@@ -24,7 +24,8 @@
       "Bash(tasklist /FI \"PID eq 29432\")",
       "Bash(tasklist /FI \"PID eq 32244\")",
       "Bash(tasklist /FI \"PID eq 26908\")",
-      "PowerShell(Get-NetTCPConnection *)"
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(grep \" ok$\")"
     ]
   }
 }

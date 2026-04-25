@@ -1,0 +1,2 @@
+class SunoGenerationError(Exception):
+    pass
