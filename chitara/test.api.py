@@ -19,11 +19,11 @@ print(f"\n2. Base URL: {settings.SUNO_API_BASE_URL}")
 print(f"\n3. Testing SunoAPIClient initialization...")
 try:
     client = SunoAPIClient()
-    print(f"   ✅ Client initialized")
+    print(f"   Client initialized.")
     print(f"   - API Key in client: {bool(client.api_key)}")
     print(f"   - Base URL: {client.base_url}")
 except Exception as e:
-    print(f"   ❌ Error: {e}")
+    print(f"   Error: {e}")
 
 print(f"\n4. Testing API call...")
 try:
@@ -32,10 +32,10 @@ try:
         prompt="Test song about happiness and love",
         duration=30
     )
-    print(f"   ✅ API Call successful!")
+    print(f"   API Call successful.")
     print(f"   Response: {result}")
 except Exception as e:
-    print(f"   ❌ API Call failed!")
+    print(f"   API Call failed.")
     print(f"   Error type: {type(e).__name__}")
     print(f"   Error message: {str(e)}")
 

@@ -26,4 +26,4 @@ themes = ['Summer', 'Love', 'Nature', 'Urban', 'Fantasy', 'Adventure', 'Nostalgi
 for theme in themes:
     Theme.objects.get_or_create(name=theme)
 
-print("✅ Sample data created!")
+print("Sample data created.")

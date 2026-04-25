@@ -17,7 +17,7 @@ print(f"2. Base URL: {settings.SUNO_API_BASE_URL}")
 
 print(f"\n3. Creating client...")
 client = SunoAPIClient()
-print(f"   ✅ Client created")
+print(f"   Client created.")
 
 print(f"\n4. Calling SUNO API...")
 try:
@@ -26,20 +26,20 @@ try:
         duration=30
     )
     
-    print(f"\n✅ API RESPONSE:")
+    print(f"\nAPI RESPONSE:")
     print(json.dumps(result, indent=2))
     
-    print(f"\n📊 Response fields:")
+    print(f"\nResponse fields:")
     for key, value in result.items():
         print(f"   - {key}: {value}")
     
     if result.get('audio_url'):
-        print(f"\n✅ Audio URL found!")
+        print(f"\nAudio URL found.")
     else:
-        print(f"\n❌ NO AUDIO URL in response!")
-        
+        print(f"\nNO AUDIO URL in response.")
+
 except Exception as e:
-    print(f"\n❌ ERROR:")
+    print(f"\nERROR:")
     print(f"   Type: {type(e).__name__}")
     print(f"   Message: {str(e)}")
     import traceback

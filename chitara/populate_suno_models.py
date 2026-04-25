@@ -51,8 +51,8 @@ for model_data in SUNO_MODELS:
     )
     
     if created:
-        print(f"✅ Created: {model_data['name']}")
+        print(f"Created: {model_data['name']}")
     else:
-        print(f"⏭️  Already exists: {model_data['name']}")
+        print(f"Already exists: {model_data['name']}")
 
-print(f"\n✅ Total SingerModels: {SingerModel.objects.count()}")
+print(f"\nTotal SingerModels: {SingerModel.objects.count()}")

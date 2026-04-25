@@ -46,7 +46,7 @@ try:
         timeout=10
     )
     
-    print(f"\n✅ Response received!")
+    print(f"\nResponse received.")
     print(f"\n6. HTTP Status Code: {response.status_code}")
     print(f"7. Response Headers:")
     for key, value in response.headers.items():
@@ -59,7 +59,7 @@ try:
     print(json.dumps(response.json(), indent=2))
     
 except Exception as e:
-    print(f"\n❌ Request failed!")
+    print(f"\nRequest failed.")
     print(f"   Error: {str(e)}")
     import traceback
     traceback.print_exc()

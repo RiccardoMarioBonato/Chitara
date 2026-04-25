@@ -53,22 +53,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎵 Chitara</h1>
+        <h1>Chitara</h1>
         <p class="subtitle">AI-Powered Music Generation</p>
 
         {% if user.is_authenticated %}
-            <h2>Welcome, {{ user.username }}! 👋</h2>
+            <h2>Welcome, {{ user.username }}!</h2>
             <div class="buttons">
-                <a href="/songs/generate/" class="success">➕ Generate New Song</a>
-                <a href="/songs/">🎵 My Songs Library</a>
-                <a href="/admin/">⚙️ Admin Panel</a>
-                <a href="/accounts/logout/" class="logout-link">🚪 Logout</a>
+                <a href="/songs/generate/" class="success">Generate New Song</a>
+                <a href="/songs/">My Songs Library</a>
+                <a href="/admin/">Admin Panel</a>
+                <a href="/accounts/logout/" class="logout-link">Logout</a>
             </div>
         {% else %}
             <p class="subtitle">Login to start generating music with AI</p>
             <div class="buttons">
-                <a href="/accounts/login/" class="success">🔐 Login</a>
-                <a href="/admin/" class="secondary">📊 Admin Panel</a>
+                <a href="/accounts/login/" class="success">Login</a>
+                <a href="/admin/" class="secondary">Admin Panel</a>
             </div>
         {% endif %}
     </div>

@@ -72,7 +72,7 @@
       >
     </div>
     <div class="col-md-3">
-      <select name="status" class="form-select">
+      <select name="status" class="form-select" onchange="this.form.submit()">
         <option value="">All Statuses</option>
         {% for value, label in generation_statuses %}
           <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
@@ -82,7 +82,7 @@
       </select>
     </div>
     <div class="col-md-2">
-      <select name="sort" class="form-select">
+      <select name="sort" class="form-select" onchange="this.form.submit()">
         <option value="newest" {% if current_sort == "newest" %}selected{% endif %}>Newest</option>
         <option value="oldest" {% if current_sort == "oldest" %}selected{% endif %}>Oldest</option>
         <option value="title"  {% if current_sort == "title"  %}selected{% endif %}>Title A–Z</option>

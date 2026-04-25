@@ -205,3 +205,49 @@ python demo_strategy.py
 ```
 
 Prints Mock output, Factory selection, and (if `SUNO_API_KEY` is set) a live Suno call.
+
+---
+
+## Screenshots
+
+### Home
+![Home](screenshots/Home.png)
+
+### Login
+![Login](screenshots/Login.png)
+
+### Google Login
+![Google Login](screenshots/Google_Login.png)
+
+### Library
+![Library](screenshots/Library.png)
+
+### Select
+![Select](screenshots/Select.png)
+
+### Generate Song
+![Generate Song](screenshots/Generate_Song.png)
+
+### Play Song
+![Play Song](screenshots/Play_Song.png)
+
+### Download Song
+![Download Song](screenshots/Download_Song.png)
+
+### Share Song
+![Share Song](screenshots/Share_Song.png)
+
+### Signout
+![Signout](screenshots/Signout.png)
+
+### Admin Login
+![Admin Login](screenshots/Admin_Login.png)
+
+### Admin CRUD 1
+![Admin CRUD 1](screenshots/Admin_CRUD1.png)
+
+### Admin CRUD 2
+![Admin CRUD 2](screenshots/Admin_CRUD2.png)
+
+### Admin CRUD 3
+![Admin CRUD 3](screenshots/Admin_CRUD3.png)
