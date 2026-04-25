@@ -72,7 +72,7 @@ class SunoSongGeneratorStrategy(SongGeneratorStrategy):
             "model": "V4_5ALL",
             "customMode": True,
             "instrumental": True,
-            "duration": max(10, min(duration, 300)),
+            "duration": max(10, min(int(duration), 300)),
             "callBackUrl": self.callback_url,
         }
 
@@ -132,7 +132,8 @@ class SunoSongGeneratorStrategy(SongGeneratorStrategy):
             return None
 
         clip = suno_data_list[0]
-        audio_url = clip.get("audioUrl") or clip.get("streamAudioUrl") or ""
+        # Prefer permanent audioUrl over streamAudioUrl (stream URLs expire quickly)
+        audio_url = clip.get("audioUrl") or clip.get("sourceAudioUrl") or clip.get("streamAudioUrl") or ""
         image_url = clip.get("imageUrl") or clip.get("sourceImageUrl") or ""
 
         return {

@@ -85,17 +85,21 @@ class SongGenerationForm(forms.ModelForm):
     duration = forms.IntegerField(
         min_value=DURATION_MIN,
         max_value=DURATION_MAX,
-        initial=60,
+        initial=30,
         widget=forms.NumberInput(attrs={
-            'class': 'form-control',
-            'min': DURATION_MIN,
-            'max': DURATION_MAX,
+            'type':    'range',
+            'min':     str(DURATION_MIN),
+            'max':     str(DURATION_MAX),
+            'step':    '5',
+            'class':   'form-range',
+            'id':      'durationSlider',
         }),
         help_text=f'Song length in seconds ({DURATION_MIN}–{DURATION_MAX}).',
         error_messages={
-            'required': 'Please specify a duration.',
+            'required':  'Duration is required.',
             'min_value': f'Duration must be at least {DURATION_MIN} seconds.',
             'max_value': f'Duration cannot exceed {DURATION_MAX} seconds.',
+            'invalid':   'Enter a valid number of seconds.',
         },
     )
 

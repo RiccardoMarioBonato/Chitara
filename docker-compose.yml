@@ -1,9 +1,0 @@
-services:
-  web:
-    build: .
-    ports:
-      - "8001:8001"
-    env_file:
-      - chitara/.env
-    volumes:
-      - ./chitara/db.sqlite3:/app/db.sqlite3

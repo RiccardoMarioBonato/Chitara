@@ -1,8 +1,3 @@
-"""
-Suno AI API Client — suno_client.py
-Handles all HTTP communication with the Suno API.
-No Django models or ORM imports belong here.
-"""
 
 import logging
 import time

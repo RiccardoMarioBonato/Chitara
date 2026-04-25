@@ -16,6 +16,8 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SITE_ID = 1
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -34,16 +36,22 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.sites',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'music',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -56,7 +64,7 @@ ROOT_URLCONF = 'chitara.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -109,15 +117,35 @@ SUNO_API_TIMEOUT  = int(os.getenv('SUNO_API_TIMEOUT', '30'))
 #   SUNO_CALLBACK_URL=https://abc123.ngrok-free.app/songs/api/callback/
 SUNO_CALLBACK_URL = os.getenv('SUNO_CALLBACK_URL', '')
 
-# --- Strategy Pattern settings (Exercise 4) ---
-# Set to "mock" for offline dev / testing, "suno" for real AI generation
 GENERATOR_STRATEGY = os.getenv('GENERATOR_STRATEGY', 'mock')
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
 # Auth redirects
-# LoginRequiredMixin sends unauthenticated users here.
-LOGIN_URL          = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/songs/'       # after login → library
+LOGIN_URL           = '/accounts/login/'
+LOGIN_REDIRECT_URL  = '/songs/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_LOGIN_METHODS      = {'username', 'email'}
+ACCOUNT_SIGNUP_FIELDS      = ['username*', 'email*', 'password1*', 'password2*']
+SOCIALACCOUNT_AUTO_SIGNUP  = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.getenv('GOOGLE_CLIENT_ID', ''),
+            'secret':    os.getenv('GOOGLE_CLIENT_SECRET', ''),
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

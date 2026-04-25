@@ -13,7 +13,17 @@
       "Bash(ipconfig)",
       "Bash(taskkill /F /IM python.exe)",
       "Bash(taskkill //F //IM python.exe)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(pip install *)",
+      "Bash(del \"C:\\\\Users\\\\dream\\\\Desktop\\\\Chitara\\\\docker-compose.yml\")",
+      "Bash(del \"C:\\\\Users\\\\dream\\\\Desktop\\\\Chitara\\\\.dockerignore\")",
+      "Bash(docker stop rickfolio_backend *)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "PowerShell(Get-Process *)",
+      "Bash(tasklist /FI \"PID eq 29432\")",
+      "Bash(tasklist /FI \"PID eq 32244\")",
+      "Bash(tasklist /FI \"PID eq 26908\")"
     ]
   }
 }

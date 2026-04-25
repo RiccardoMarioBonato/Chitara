@@ -1,8 +1,3 @@
-"""
-Persistence Layer — repositories.py
-All direct database access is isolated here.
-HTTP / API concerns live in suno_client.py instead.
-"""
 
 import logging
 from typing import Optional
