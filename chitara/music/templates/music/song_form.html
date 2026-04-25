@@ -123,47 +123,54 @@
             </div>
 
             <!-- Duration -->
-            <div class="mb-3">
-              <label class="form-label fw-semibold" for="id_duration">
-                Duration: <strong id="dur-display">120s</strong>
-                <span class="text-muted" style="font-size:0.8rem">(30–300 seconds)</span>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                Duration: <span id="dur-val">120</span>s
+                <span class="text-muted" style="font-size:0.8rem">(30 – 300 seconds)</span>
                 <span class="text-danger">*</span>
               </label>
 
-              {# Hidden number input — what Django reads on submit #}
               <input type="hidden" name="duration" id="id_duration"
-                     value="{{ form.duration.value|default:'120' }}">
+                     value="{% if form.duration.value %}{{ form.duration.value }}{% else %}120{% endif %}">
 
-              {# Visual slider — purely cosmetic, JS syncs to hidden input #}
-              <input type="range" id="dur-slider"
+              <input type="range" id="dur-range"
                      min="30" max="300" step="5"
-                     value="{{ form.duration.value|default:'120' }}"
-                     class="form-range"
-                     oninput="chitaraDurSync(this.value)">
+                     value="{% if form.duration.value %}{{ form.duration.value }}{% else %}120{% endif %}"
+                     class="form-range" style="width:100%;cursor:pointer">
 
               <div class="d-flex justify-content-between">
-                <small class="text-muted">30s</small>
-                <small class="text-muted">5 min</small>
+                <small class="text-muted">30s (min)</small>
+                <small class="text-muted">300s (max)</small>
               </div>
 
               {% if form.duration.errors %}
-                <div class="text-danger small mt-1">{{ form.duration.errors }}</div>
+                <div class="text-danger small mt-1">
+                  {% for error in form.duration.errors %}{{ error }}{% endfor %}
+                </div>
               {% endif %}
             </div>
 
             <script>
-              function chitaraDurSync(val) {
+            (function () {
+              var range  = document.getElementById('dur-range');
+              var hidden = document.getElementById('id_duration');
+              var label  = document.getElementById('dur-val');
+              if (!range || !hidden || !label) return;
+
+              function sync(val) {
                 var v = parseInt(val, 10);
-                if (isNaN(v) || v < 30)  v = 30;
+                if (isNaN(v)) v = 120;
+                if (v < 30)  v = 30;
                 if (v > 300) v = 300;
-                document.getElementById('id_duration').value     = v;
-                document.getElementById('dur-display').textContent = v + 's';
-                document.getElementById('dur-slider').value      = v;
+                range.value       = v;
+                hidden.value      = v;
+                label.textContent = v;
               }
-              (function () {
-                var stored = parseInt(document.getElementById('id_duration').value, 10);
-                chitaraDurSync(isNaN(stored) ? 120 : stored);
-              })();
+
+              range.addEventListener('input',  function () { sync(this.value); });
+              range.addEventListener('change', function () { sync(this.value); });
+              sync(hidden.value || range.value || 120);
+            })();
             </script>
 
             <!-- Review Notes -->

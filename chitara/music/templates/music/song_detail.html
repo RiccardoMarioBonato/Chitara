@@ -69,54 +69,48 @@
             <div class="mb-4">
               <p class="fw-semibold mb-2">&#9835; Listen</p>
 
-              <audio id="song-audio" preload="metadata" style="display:none">
+              <audio id="cp-audio" preload="auto">
                 <source src="{{ song.audio_url }}" type="audio/mpeg">
+                <source src="{{ song.audio_url }}" type="audio/ogg">
               </audio>
 
-              <!-- Div-based custom player (avoids range-request seek snapping) -->
-              <div style="background:var(--ch-surface);border-radius:12px;padding:1rem 1.1rem;border:1px solid var(--ch-border)">
+              <div id="cp-wrap" style="background:var(--ch-surface);border-radius:14px;
+                   padding:1.25rem;border:1px solid var(--ch-border)">
 
-                <!-- Progress bar -->
-                <div style="margin-bottom:0.75rem">
-                  <div id="progress-track"
-                       style="background:var(--ch-border);border-radius:999px;height:6px;
-                              cursor:pointer;position:relative">
-                    <div id="progress-fill"
+                <div id="cp-loading" style="color:var(--ch-muted);font-size:0.85rem;
+                     margin-bottom:0.5rem;display:none">Loading audio…</div>
+
+                <!-- Progress track — tall outer div for easy clicking, thin inner bar for looks -->
+                <div id="cp-track"
+                     style="padding:10px 0;cursor:pointer;user-select:none;position:relative;margin-bottom:0.25rem">
+                  <div style="background:var(--ch-border);border-radius:999px;height:6px;position:relative">
+                    <div id="cp-fill"
                          style="background:var(--ch-accent);height:6px;border-radius:999px;
                                 width:0%;pointer-events:none"></div>
-                    <div id="progress-thumb"
-                         style="position:absolute;top:-5px;left:0%;width:16px;height:16px;
-                                background:#a78bfa;border-radius:50%;transform:translateX(-50%);
-                                pointer-events:none"></div>
+                    <div id="cp-thumb"
+                         style="position:absolute;top:50%;left:0%;width:16px;height:16px;
+                                background:#a78bfa;border-radius:50%;
+                                transform:translate(-50%,-50%);pointer-events:none"></div>
                   </div>
                 </div>
 
-                <!-- Time row -->
                 <div class="d-flex justify-content-between mb-3">
-                  <small id="current-time" style="color:var(--ch-muted);font-family:monospace">0:00</small>
-                  <small id="duration-time" style="color:var(--ch-muted);font-family:monospace">0:00</small>
+                  <small id="cp-cur" style="color:var(--ch-muted);font-family:monospace">0:00</small>
+                  <small id="cp-dur" style="color:var(--ch-muted);font-family:monospace">--:--</small>
                 </div>
 
-                <!-- Controls row -->
                 <div class="d-flex align-items-center gap-3">
-                  <button onclick="chRestart()"
-                          style="background:none;border:none;color:var(--ch-muted);font-size:1.1rem;cursor:pointer;padding:0"
-                          title="Restart">&#9198;</button>
-                  <button id="play-btn"
-                          onclick="chPlayPause()"
+                  <button onclick="cpRestart()"
+                          style="background:none;border:none;color:var(--ch-muted);font-size:1.2rem;cursor:pointer">&#9198;</button>
+                  <button id="cp-playbtn" onclick="cpToggle()"
                           style="background:var(--ch-accent);border:none;color:#fff;
-                                 width:40px;height:40px;border-radius:50%;font-size:1rem;
-                                 cursor:pointer;display:flex;align-items:center;justify-content:center"
-                          title="Play / Pause" disabled>&#9654;</button>
-                  <button onclick="chSkip()"
-                          style="background:none;border:none;color:var(--ch-muted);font-size:1.1rem;cursor:pointer;padding:0"
-                          title="Skip to end">&#9197;</button>
-                  <div class="d-flex align-items-center gap-2 ms-auto">
-                    <span style="color:var(--ch-muted);font-size:0.85rem">&#128266;</span>
-                    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="1"
-                           style="width:72px;accent-color:var(--ch-accent)"
-                           oninput="document.getElementById('song-audio').volume=this.value">
-                  </div>
+                                 width:44px;height:44px;border-radius:50%;font-size:1.1rem;cursor:pointer">&#9654;</button>
+                  <button onclick="cpSkip()"
+                          style="background:none;border:none;color:var(--ch-muted);font-size:1.2rem;cursor:pointer">&#9197;</button>
+                  <span style="color:var(--ch-muted);margin-left:auto;font-size:0.9rem">&#128266;</span>
+                  <input type="range" min="0" max="1" step="0.02" value="1"
+                         style="width:80px;accent-color:var(--ch-accent)"
+                         oninput="document.getElementById('cp-audio').volume=this.value">
                 </div>
               </div>
 
@@ -138,78 +132,102 @@
 
             <script>
             (function () {
-              var audio    = document.getElementById('song-audio');
-              var fill     = document.getElementById('progress-fill');
-              var thumb    = document.getElementById('progress-thumb');
-              var track    = document.getElementById('progress-track');
-              var curTime  = document.getElementById('current-time');
-              var durTime  = document.getElementById('duration-time');
-              var playBtn  = document.getElementById('play-btn');
-              var errorBox = document.getElementById('audio-error');
-              var seeking  = false;
+              var audio   = document.getElementById('cp-audio');
+              var fill    = document.getElementById('cp-fill');
+              var thumb   = document.getElementById('cp-thumb');
+              var cur     = document.getElementById('cp-cur');
+              var durEl   = document.getElementById('cp-dur');
+              var playBtn = document.getElementById('cp-playbtn');
+              var track   = document.getElementById('cp-track');
+              var loading = document.getElementById('cp-loading');
+              var errBox  = document.getElementById('audio-error');
+              var dragging = false;
 
               function fmt(s) {
-                s = isFinite(s) ? Math.max(0, s) : 0;
+                if (!isFinite(s) || s < 0) return '0:00';
                 var m = Math.floor(s / 60), sec = Math.floor(s % 60);
                 return m + ':' + (sec < 10 ? '0' : '') + sec;
               }
 
-              function setBar(pct) {
-                fill.style.width = pct + '%';
-                thumb.style.left = pct + '%';
+              function setBar(frac) {
+                var p = Math.max(0, Math.min(1, frac)) * 100;
+                fill.style.width = p + '%';
+                thumb.style.left = p + '%';
               }
 
+              function seekTo(clientX) {
+                var rect = track.getBoundingClientRect();
+                var frac = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                if (audio.duration) audio.currentTime = frac * audio.duration;
+                setBar(frac);
+                cur.textContent = fmt(frac * (audio.duration || 0));
+              }
+
+              /* ── Audio events ── */
               audio.addEventListener('loadedmetadata', function () {
-                durTime.textContent = fmt(audio.duration);
+                if (isFinite(audio.duration)) durEl.textContent = fmt(audio.duration);
                 playBtn.disabled = false;
               });
               audio.addEventListener('durationchange', function () {
                 if (isFinite(audio.duration) && audio.duration > 0)
-                  durTime.textContent = fmt(audio.duration);
+                  durEl.textContent = fmt(audio.duration);
               });
-              audio.addEventListener('error', function () {
-                errorBox.classList.remove('d-none');
-              });
+              audio.addEventListener('waiting', function () { loading.style.display = 'block'; });
+              audio.addEventListener('canplay', function () { loading.style.display = 'none'; playBtn.disabled = false; });
               audio.addEventListener('timeupdate', function () {
-                if (!seeking && audio.duration) {
-                  setBar((audio.currentTime / audio.duration) * 100);
-                  curTime.textContent = fmt(audio.currentTime);
+                if (!dragging && audio.duration) {
+                  setBar(audio.currentTime / audio.duration);
+                  cur.textContent = fmt(audio.currentTime);
                 }
               });
-              audio.addEventListener('ended', function () {
-                playBtn.innerHTML = '&#9654;';
+              audio.addEventListener('ended', function () { playBtn.textContent = '▶'; });
+              audio.addEventListener('error', function () {
+                loading.style.display = 'none';
+                errBox.classList.remove('d-none');
               });
 
-              /* ── Seek logic ── */
-              function seekTo(e) {
-                var rect = track.getBoundingClientRect();
-                var pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                setBar(pct * 100);
-                curTime.textContent = fmt(pct * (audio.duration || 0));
-                if (audio.duration) audio.currentTime = pct * audio.duration;
-              }
+              /* ── Mouse seek ── */
+              track.addEventListener('mousedown', function (e) {
+                dragging = true; seekTo(e.clientX); e.preventDefault();
+              });
+              document.addEventListener('mousemove', function (e) { if (dragging) seekTo(e.clientX); });
+              document.addEventListener('mouseup',   function (e) { if (dragging) { seekTo(e.clientX); dragging = false; } });
 
-              track.addEventListener('mousedown', function (e) { seeking = true; seekTo(e); });
-              document.addEventListener('mousemove', function (e) { if (seeking) seekTo(e); });
-              document.addEventListener('mouseup',   function (e) { if (seeking) { seekTo(e); seeking = false; } });
-
-              track.addEventListener('touchstart', function (e) { seeking = true; seekTo(e.touches[0]); }, { passive: true });
-              document.addEventListener('touchmove', function (e) { if (seeking) seekTo(e.touches[0]); }, { passive: true });
-              document.addEventListener('touchend',  function ()  { seeking = false; });
+              /* ── Touch seek ── */
+              track.addEventListener('touchstart', function (e) {
+                dragging = true; seekTo(e.touches[0].clientX);
+              }, { passive: true });
+              document.addEventListener('touchmove', function (e) {
+                if (dragging) seekTo(e.touches[0].clientX);
+              }, { passive: true });
+              document.addEventListener('touchend', function () { dragging = false; });
 
               /* ── Controls ── */
-              window.chPlayPause = function () {
-                if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
-                else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
+              window.cpToggle = function () {
+                if (audio.paused) { audio.play(); playBtn.textContent = '⏸'; }
+                else              { audio.pause(); playBtn.textContent = '▶'; }
               };
-              window.chRestart = function () {
-                audio.currentTime = 0; audio.play(); playBtn.innerHTML = '&#9646;&#9646;';
+              window.cpRestart = function () {
+                audio.currentTime = 0; audio.play(); playBtn.textContent = '⏸';
               };
-              window.chSkip = function () {
-                if (audio.duration) { audio.currentTime = audio.duration; playBtn.innerHTML = '&#9654;'; }
+              window.cpSkip = function () {
+                if (audio.duration) audio.currentTime = audio.duration - 0.1;
+                playBtn.textContent = '▶';
               };
 
-              if (audio.readyState >= 1) { durTime.textContent = fmt(audio.duration); playBtn.disabled = false; }
+              /* ── Keyboard ── */
+              document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+                if (e.code === 'Space')      { e.preventDefault(); cpToggle(); }
+                if (e.code === 'ArrowRight') audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 5);
+                if (e.code === 'ArrowLeft')  audio.currentTime = Math.max(0, audio.currentTime - 5);
+              });
+
+              /* ── Race condition: file may already be loaded ── */
+              if (audio.readyState >= 1) {
+                if (isFinite(audio.duration)) durEl.textContent = fmt(audio.duration);
+                playBtn.disabled = false;
+              }
             })();
             </script>
 
