@@ -96,6 +96,11 @@ cp chitara/.env.example chitara/.env
 ## Manual Setup (without Docker)
 
 ```bash
+# 1. Copy and edit the environment file first
+cp chitara/.env.example chitara/.env
+# open chitara/.env and fill in any values you need
+
+# 2. Create and activate a virtual environment
 cd chitara
 
 python -m venv venv
@@ -104,13 +109,18 @@ venv\Scripts\activate
 # Mac/Linux
 source venv/bin/activate
 
+# 3. Install dependencies
 pip install -r requirements.txt
 
+# 4. Run migrations and seed data
 python manage.py migrate
 python populate_initial_data.py
 python populate_suno_models.py
 
-python manage.py createsuperuser   # optional admin account
+# 5. (Optional) Create an admin account
+python manage.py createsuperuser
+
+# 6. Start the server
 python manage.py runserver
 ```
 
@@ -123,7 +133,9 @@ Chitara/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── docker-entrypoint.sh
-├── Readme.md
+├── data/                           # SQLite volume (created on first run, gitignored)
+│   └── db.sqlite3
+├── diagrams/                       # UML diagrams (domain model, class, sequence)
 └── chitara/
     ├── manage.py
     ├── requirements.txt
@@ -136,20 +148,21 @@ Chitara/
     │   ├── settings.py
     │   ├── urls.py
     │   └── wsgi.py
-    └── music/                      # main app
-        ├── models.py
-        ├── views.py
-        ├── urls.py
-        ├── forms.py
-        ├── services.py
-        ├── repositories.py
-        ├── suno_client.py
+    └── music/                      # main app — one class per file
+        ├── models/                 # Song, Genre, Mood, Occasion, Theme, SingerModel, Feedback
+        ├── views/                  # SongGenerationView, LibraryView, DetailView, …
+        ├── services/               # SongGenerationService, SongLibraryService
+        ├── repositories/           # SongRepository
+        ├── suno_client/            # SunoAPIClient, APIError
+        ├── admin/                  # per-model admin registrations
         ├── strategies/
-        │   ├── base.py             # abstract SongGeneratorStrategy
-        │   ├── factory.py          # StrategyFactory
+        │   ├── base.py             # abstract SongGeneratorStrategy (ABC)
+        │   ├── factory.py          # StrategyFactory — reads GENERATOR_STRATEGY
         │   ├── mock_strategy.py    # offline / deterministic
-        │   ├── suno_strategy.py    # real Suno API
+        │   ├── suno_strategy.py    # real Suno API + async polling
         │   └── exceptions.py
+        ├── forms.py
+        ├── urls.py
         └── templates/
 ```
 
