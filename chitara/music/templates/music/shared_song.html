@@ -34,18 +34,12 @@
               <small id="sh-dur"  style="color:#7e8ea8;font-family:monospace">0:00</small>
             </div>
             <div class="d-flex align-items-center gap-3">
-              <button onclick="shRestart()"
-                      style="background:none;border:none;color:#7e8ea8;font-size:1.1rem;cursor:pointer;padding:0"
-                      title="Restart">&#9198;</button>
               <button id="sh-play"
                       onclick="shPlayPause()"
                       style="background:#7c3aed;border:none;color:#fff;width:40px;height:40px;
                              border-radius:50%;font-size:1rem;cursor:pointer;
                              display:flex;align-items:center;justify-content:center"
                       title="Play / Pause" disabled>&#9654;</button>
-              <button onclick="shSkip()"
-                      style="background:none;border:none;color:#7e8ea8;font-size:1.1rem;cursor:pointer;padding:0"
-                      title="Skip to end">&#9197;</button>
               <div class="d-flex align-items-center gap-2 ms-auto">
                 <span style="color:#7e8ea8;font-size:0.85rem">&#128266;</span>
                 <input type="range" min="0" max="1" step="0.05" value="1"
@@ -115,13 +109,6 @@
               if (audio.paused) { audio.play(); playBtn.innerHTML = '&#9646;&#9646;'; }
               else              { audio.pause(); playBtn.innerHTML = '&#9654;'; }
             };
-            window.shRestart = function () {
-              audio.currentTime = 0; audio.play(); playBtn.innerHTML = '&#9646;&#9646;';
-            };
-            window.shSkip = function () {
-              if (audio.duration) { audio.currentTime = audio.duration; playBtn.innerHTML = '&#9654;'; }
-            };
-
             if (audio.readyState >= 1) { durEl.textContent = fmt(audio.duration); playBtn.disabled = false; }
           })();
           </script>

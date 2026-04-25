@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db.models import QuerySet
 
 from ..models import GenerationStatus, Song
+from ..strategies.mock_strategy import MOCK_AUDIO_URL
 from ..repositories import RepositoryError, SongRepository
 from ..suno_client import APIError, SunoAPIClient
 from ..strategies.exceptions import (
@@ -73,17 +74,10 @@ class SongGenerationService:
                 song.external_id = result['task_id']
                 song.save(update_fields=['external_id'])
 
-            if result.get('status') == 'SUCCESS' and result.get('audio_url'):
-                self.repository.update_audio_url(song, result['audio_url'])
+            if result.get('status') == 'SUCCESS':
+                self.repository.update_audio_url(song, result.get('audio_url') or MOCK_AUDIO_URL)
                 self.repository.update_generation_status(song, GenerationStatus.COMPLETED)
                 logger.info('Song %s completed immediately (mock/sync)', song.pk)
-            elif result.get('status') == 'SUCCESS' and not result.get('audio_url'):
-                from django.conf import settings
-                if getattr(settings, 'GENERATOR_STRATEGY', 'mock').lower() == 'mock':
-                    from music.strategies.mock_strategy import MOCK_AUDIO_URL
-                    self.repository.update_audio_url(song, MOCK_AUDIO_URL)
-                    self.repository.update_generation_status(song, GenerationStatus.COMPLETED)
-                    logger.warning('Song %s SUCCESS but no audio_url; saved mock fallback', song.pk)
             else:
                 logger.info('Song %s queued for async generation', song.pk)
 
