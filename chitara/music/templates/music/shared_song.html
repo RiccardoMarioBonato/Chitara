@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}{{ song.title }} — Chitara{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-lg-8">
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body p-4">
+        <h1 class="h3 mb-1">{{ song.title }}</h1>
+        <p class="text-muted small mb-4">Shared on {{ song.created_at|date:"d M Y" }}</p>
+
+        {% if song.audio_url %}
+          <p class="fw-semibold mb-2">&#9835; Listen</p>
+          <audio controls class="w-100 mb-3" src="{{ song.audio_url }}" preload="metadata">
+            Your browser does not support the audio element.
+          </audio>
+          <a href="{{ song.audio_url }}" target="_blank" class="btn btn-outline-primary btn-sm mb-4">
+            &#8615; Download MP3
+          </a>
+        {% endif %}
+
+        <ul class="list-group list-group-flush mt-3">
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Genre</span>
+            <span>{{ song.genre }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Mood</span>
+            <span>{{ song.mood }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Occasion</span>
+            <span>{{ song.occasion }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted">Duration</span>
+            <span>{{ song.duration }}s</span>
+          </li>
+          {% if themes %}
+            <li class="list-group-item">
+              <span class="text-muted d-block mb-1">Themes</span>
+              <div class="d-flex flex-wrap gap-1">
+                {% for theme in themes %}
+                  <span class="badge bg-secondary">{{ theme }}</span>
+                {% endfor %}
+              </div>
+            </li>
+          {% endif %}
+        </ul>
+
+      </div>
+    </div>
+
+    <div class="text-center text-muted small">
+      Created with <a href="/">Chitara</a> — AI Music Generation
+    </div>
+
+  </div>
+</div>
+{% endblock %}

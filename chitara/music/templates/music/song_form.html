@@ -15,6 +15,10 @@
           &larr; My Library
         </a>
         <h1 class="h3 mb-0">Generate a New Song</h1>
+        <span class="ms-3 badge {% if generator_strategy == 'suno' %}bg-success{% else %}bg-secondary{% endif %}"
+              title="Active generation backend">
+          {% if generator_strategy == 'suno' %}Suno API{% else %}Mock{% endif %}
+        </span>
       </div>
 
       <!-- Global error messages -->
@@ -120,14 +124,17 @@
 
             <!-- Duration -->
             <div class="mb-3">
-              <label for="{{ form.duration.id_for_label }}" class="form-label fw-semibold">
-                Duration (seconds) <span class="text-danger">*</span>
+              <label for="durationSlider" class="form-label fw-semibold">
+                Duration: <span id="durationValue">30s</span> <span class="text-danger">*</span>
               </label>
               {{ form.duration }}
               {% if form.duration.errors %}
                 <div class="invalid-feedback d-block">{{ form.duration.errors|join:", " }}</div>
               {% endif %}
-              <div class="form-text">{{ form.duration.help_text }}</div>
+              <div class="d-flex justify-content-between">
+                <small class="text-muted">10s</small>
+                <small class="text-muted">300s</small>
+              </div>
             </div>
 
             <!-- Review Notes -->
@@ -162,15 +169,25 @@
 
 {% block extra_js %}
 <script>
-  // Show spinner while the form is submitting to give visual feedback.
-  document.getElementById('song-generation-form').addEventListener('submit', function () {
-    const btn     = document.getElementById('submit-btn');
-    const spinner = document.getElementById('spinner');
-    const text    = document.getElementById('btn-text');
+  document.addEventListener('DOMContentLoaded', function () {
+    var slider = document.getElementById('durationSlider');
+    var label  = document.getElementById('durationValue');
+    if (slider && label) {
+      label.textContent = slider.value + 's';
+      slider.addEventListener('input', function () {
+        label.textContent = this.value + 's';
+      });
+    }
 
-    btn.disabled = true;
-    spinner.classList.remove('d-none');
-    text.textContent = 'Generating…';
+    // Show spinner while the form is submitting.
+    document.getElementById('song-generation-form').addEventListener('submit', function () {
+      var btn     = document.getElementById('submit-btn');
+      var spinner = document.getElementById('spinner');
+      var text    = document.getElementById('btn-text');
+      btn.disabled = true;
+      spinner.classList.remove('d-none');
+      text.textContent = 'Generating…';
+    });
   });
 </script>
 {% endblock %}

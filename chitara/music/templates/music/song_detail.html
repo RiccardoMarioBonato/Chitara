@@ -50,20 +50,22 @@
           {% if is_completed and song.audio_url %}
             <div class="mb-4">
               <p class="fw-semibold mb-2">&#9835; Listen</p>
-              <audio
-                controls
-                class="w-100"
-                src="{{ song.audio_url }}"
-                preload="metadata"
-              >
+              <audio controls preload="metadata" class="w-100" id="song-audio-player">
+                <source src="{{ song.audio_url }}" type="audio/mpeg">
                 Your browser does not support the audio element.
               </audio>
+              <div id="audio-error" class="alert alert-warning mt-2 d-none">
+                &#9888; Audio could not be loaded — the file may still be processing or the link has expired.
+                <div class="mt-2">
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="regenerate">
+                    <button type="submit" class="btn btn-sm btn-warning">&#8635; Regenerate</button>
+                  </form>
+                </div>
+              </div>
             </div>
-            <a
-              href="{{ song.audio_url }}"
-              download="{{ song.title }}.mp3"
-              class="btn btn-outline-primary btn-sm mb-4"
-            >
+            <a href="{% url 'music:song-download' song.pk %}" class="btn btn-outline-primary btn-sm mb-4">
               &#8615; Download MP3
             </a>
 
@@ -123,6 +125,20 @@
                 Delete
               </button>
             </form>
+
+            <!-- Feedback -->
+            {% if is_completed %}
+              <a href="{% url 'music:feedback' %}" class="btn btn-outline-info btn-sm">
+                Leave Feedback
+              </a>
+            {% endif %}
+
+            <!-- Public shareable link -->
+            {% if is_completed and song.is_shared %}
+              <a href="{% url 'music:shared-song' song_id=song.pk %}" class="btn btn-outline-primary btn-sm" target="_blank">
+                View Public Page
+              </a>
+            {% endif %}
 
           </div><!-- /action buttons -->
 
@@ -198,11 +214,34 @@
 
 {% block extra_js %}
 {% if is_generating %}
-{# Auto-refresh every 10 seconds while the song is still being generated. #}
 <script>
-  setTimeout(function () {
-    window.location.reload();
-  }, 10000);
+  setTimeout(function () { window.location.reload(); }, 10000);
+</script>
+{% endif %}
+{% if is_completed and song.audio_url %}
+<script>
+  (function () {
+    var player = document.getElementById('song-audio-player');
+    var errorBox = document.getElementById('audio-error');
+    if (!player || !errorBox) return;
+
+    function showError() { errorBox.classList.remove('d-none'); }
+
+    // Hard load failure (404, CORS, decode error)
+    player.addEventListener('error', showError);
+
+    // File loaded but has no playable content (0 bytes / invalid)
+    player.addEventListener('loadedmetadata', function () {
+      if (!isFinite(player.duration) || player.duration === 0) showError();
+    });
+
+    // Fallback: if nothing is ready after 10 seconds, show the error
+    var timeout = setTimeout(function () {
+      if (player.readyState < 2) showError();
+    }, 10000);
+
+    player.addEventListener('canplay', function () { clearTimeout(timeout); });
+  })();
 </script>
 {% endif %}
 {% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Preview Song — Chitara{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-lg-7">
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold fs-5">Review Your Song Request</div>
+      <div class="card-body p-4">
+
+        <p class="text-muted mb-4">Please confirm the details below before submitting for AI generation.</p>
+
+        <ul class="list-group list-group-flush mb-4">
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Title</span>
+            <span>{{ preview.title }}</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Voice Model</span>
+            <span>{{ preview.singer_model }}</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Genre</span>
+            <span>{{ preview.genre }}</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Mood</span>
+            <span>{{ preview.mood }}</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Occasion</span>
+            <span>{{ preview.occasion }}</span>
+          </li>
+
+          <li class="list-group-item d-flex justify-content-between">
+            <span class="text-muted fw-semibold">Duration</span>
+            <span>{{ preview.duration }}s</span>
+          </li>
+
+          {% if preview.themes %}
+            <li class="list-group-item">
+              <span class="text-muted fw-semibold d-block mb-1">Themes</span>
+              <div class="d-flex flex-wrap gap-1">
+                {% for theme in preview.themes %}
+                  <span class="badge bg-secondary">{{ theme }}</span>
+                {% endfor %}
+              </div>
+            </li>
+          {% endif %}
+
+          {% if preview.review_notes %}
+            <li class="list-group-item">
+              <span class="text-muted fw-semibold d-block mb-1">Creative Notes</span>
+              <p class="mb-0 small">{{ preview.review_notes }}</p>
+            </li>
+          {% endif %}
+
+        </ul>
+
+        <div class="d-flex gap-3">
+          <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success px-4">Confirm &amp; Generate</button>
+          </form>
+          <a href="{% url 'music:song-generate' %}" class="btn btn-outline-secondary">Go Back &amp; Edit</a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
